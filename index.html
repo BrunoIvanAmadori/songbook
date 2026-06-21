@@ -138,16 +138,6 @@
       box-shadow:var(--shadow);
       padding:18px 16px 30px;
     }
-    .sheet::before{
-      content:"";
-      position:absolute;
-      inset:0 0 auto;
-      height:220px;
-      background:
-        radial-gradient(circle at top left, rgba(30,215,96,.32), transparent 34%),
-        linear-gradient(180deg, rgba(42,42,42,.12), transparent 100%);
-      pointer-events:none;
-    }
     .song-head{
       position:relative;
       z-index:1;
@@ -156,6 +146,19 @@
       padding:18px 0 18px;
       margin-bottom:18px;
       border-bottom:1px solid rgba(255,255,255,.08);
+    }
+    .song-head::before{
+      content:"";
+      position:absolute;
+      top:-18px;
+      right:-16px;
+      bottom:0;
+      left:-16px;
+      background:
+        radial-gradient(circle at top left, rgba(30,215,96,.32), transparent 34%),
+        linear-gradient(180deg, rgba(42,42,42,.12), transparent 100%);
+      pointer-events:none;
+      z-index:-1;
     }
     .song-title{
       margin:0;
