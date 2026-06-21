@@ -68,8 +68,14 @@
       letter-spacing:.01em;
     }
     .brand{display:grid;gap:4px;align-content:start}
-    .controls{display:grid;grid-template-columns:1fr;gap:8px}
-    .config-row{display:grid;grid-template-columns:1fr;gap:8px}
+    .controls{display:grid;grid-template-columns:1fr;gap:10px}
+    .config-row{
+      display:grid;
+      grid-template-columns:minmax(92px, 1.1fr) minmax(132px, 1fr) minmax(108px, .9fr);
+      gap:8px;
+      align-items:end;
+    }
+    .control-compact label{margin-bottom:5px}
     .wide{grid-column:1/-1}
     label{
       display:block;
@@ -82,13 +88,13 @@
     }
     select,button{
       width:100%;
-      min-height:46px;
+      min-height:42px;
       border:1px solid rgba(255,255,255,.08);
       border-radius:999px;
       background:#242424;
       color:var(--ink);
-      padding:10px 14px;
-      font-size:14px;
+      padding:8px 12px;
+      font-size:13px;
       transition:transform .18s ease, border-color .18s ease, background .18s ease, box-shadow .18s ease;
     }
     select:focus,button:focus{
@@ -117,8 +123,9 @@
     #fontUp:hover{
       background:var(--accent-strong);
     }
-    .stepper{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}
+    .stepper{display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px}
     .stepper.two{grid-template-columns:1fr 1fr}
+    .stepper button{min-height:38px;padding:8px 0}
     main{
       max-width:1180px;
       margin:0 auto;
@@ -178,23 +185,59 @@
       position:relative;
       z-index:1;
       margin:0 0 24px;
-      padding:14px;
       border:1px solid rgba(255,255,255,.06);
       border-radius:20px;
       background:rgba(255,255,255,.04);
+      overflow:hidden;
     }
-    .reference-label{
+    .reference-toggle{
+      list-style:none;
       display:flex;
-      justify-content:space-between;
       align-items:center;
+      justify-content:space-between;
       gap:12px;
-      margin-bottom:12px;
-      font-size:14px;
-      color:var(--muted);
+      padding:14px;
+      cursor:pointer;
     }
-    .reference-label strong{
+    .reference-toggle::-webkit-details-marker{display:none}
+    .reference-toggle::marker{content:""}
+    .reference-summary{
+      display:flex;
+      align-items:center;
+      gap:10px;
+      min-width:0;
+    }
+    .reference-dot{
+      width:10px;
+      height:10px;
+      flex:0 0 10px;
+      border-radius:999px;
+      background:var(--accent);
+      box-shadow:0 0 16px rgba(30,215,96,.45);
+    }
+    .reference-summary strong{
+      font-size:15px;
       color:var(--ink);
+    }
+    .reference-summary span{
+      color:var(--muted);
+      font-size:12px;
+    }
+    .reference-actions{
+      display:flex;
+      align-items:center;
+      gap:10px;
+      flex-shrink:0;
+    }
+    .reference-chevron{
+      color:var(--muted);
       font-size:16px;
+      transition:transform .18s ease;
+    }
+    .reference-player[open] .reference-chevron{transform:rotate(180deg)}
+    .reference-body{
+      padding:0 14px 14px;
+      border:1px solid rgba(255,255,255,.06);
     }
     .reference-link{
       color:#ffffff;
@@ -268,7 +311,6 @@
     }
     .pair .lyrics,
     .plain-row{color:var(--ink)}
-    .footer-actions{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:16px}
     .plain-row{
       padding:2px 0;
       color:#efefef;
@@ -286,8 +328,6 @@
       line-height:1.45;
     }
     @media (min-width:700px){
-      .controls{grid-template-columns:1fr}
-      .config-row{grid-template-columns:1fr 1fr 1fr}
       .wide{grid-column:auto}
       .sheet{padding:26px 28px 32px}
     }
@@ -296,7 +336,7 @@
       .controls{align-self:stretch}
     }
     @media print{
-      header,.footer-actions,.note,.reference-player{display:none}
+      header,.note,.reference-player{display:none}
       body{background:white}
       main{padding:0;max-width:none}
       .sheet{border:0;box-shadow:none;border-radius:0}
@@ -572,10 +612,12 @@ function groupHeaderControls(){
   const keyControl = el.keySelect && el.keySelect.parentElement;
   const transposeStepper = document.getElementById('downBtn');
   const transposeControl = transposeStepper && transposeStepper.closest('.stepper') && transposeStepper.closest('.stepper').parentElement;
+  const resetBtn = document.getElementById('resetBtn');
+  const upBtn = document.getElementById('upBtn');
   const footerActions = document.querySelector('.footer-actions');
   const fontDown = document.getElementById('fontDown');
   const fontUp = document.getElementById('fontUp');
-  if (!controls || !songPicker || !keyControl || !transposeControl || !footerActions || !fontDown || !fontUp) return;
+  if (!controls || !songPicker || !keyControl || !transposeControl || !footerActions || !fontDown || !fontUp || !resetBtn || !upBtn) return;
 
   const row = document.createElement('div');
   row.className = 'config-row';
@@ -585,7 +627,10 @@ function groupHeaderControls(){
   fontLabel.textContent = 'Letra';
   const fontStepper = document.createElement('div');
   fontStepper.className = 'stepper two';
-  fontDown.textContent = '−';
+  transposeStepper.textContent = '-';
+  resetBtn.textContent = '0';
+  upBtn.textContent = '+';
+  fontDown.textContent = '-';
   fontUp.textContent = '+';
   fontStepper.appendChild(fontDown);
   fontStepper.appendChild(fontUp);
@@ -739,21 +784,51 @@ function renderYouTubeReference(song) {
   el.reference.innerHTML = '';
   if (!youtubeEmbedUrl) return;
 
-  const section = document.createElement('section');
+  const section = document.createElement('details');
   section.className = 'reference-player';
 
-  const label = document.createElement('div');
-  label.className = 'reference-label';
+  const summary = document.createElement('summary');
+  summary.className = 'reference-toggle';
 
+  const summaryText = document.createElement('div');
+  summaryText.className = 'reference-summary';
+
+  const dot = document.createElement('span');
+  dot.className = 'reference-dot';
+
+  const titleWrap = document.createElement('div');
   const title = document.createElement('strong');
-  title.textContent = 'Referencia';
+  title.textContent = 'Referencia de YouTube';
+  const hint = document.createElement('span');
+  hint.textContent = 'Abrir solo cuando la necesites';
+  titleWrap.appendChild(title);
+  titleWrap.appendChild(hint);
+
+  summaryText.appendChild(dot);
+  summaryText.appendChild(titleWrap);
+
+  const actions = document.createElement('div');
+  actions.className = 'reference-actions';
 
   const link = document.createElement('a');
   link.className = 'reference-link';
   link.href = youtubeUrl;
   link.target = '_blank';
   link.rel = 'noopener noreferrer';
-  link.textContent = 'Abrir en YouTube';
+  link.textContent = 'Abrir';
+  link.addEventListener('click', e => e.stopPropagation());
+
+  const chevron = document.createElement('span');
+  chevron.className = 'reference-chevron';
+  chevron.textContent = '▾';
+
+  actions.appendChild(link);
+  actions.appendChild(chevron);
+  summary.appendChild(summaryText);
+  summary.appendChild(actions);
+
+  const body = document.createElement('div');
+  body.className = 'reference-body';
 
   const iframe = document.createElement('iframe');
   iframe.className = 'reference-frame';
@@ -763,10 +838,9 @@ function renderYouTubeReference(song) {
   iframe.referrerPolicy = 'strict-origin-when-cross-origin';
   iframe.allowFullscreen = true;
 
-  label.appendChild(title);
-  label.appendChild(link);
-  section.appendChild(label);
-  section.appendChild(iframe);
+  body.appendChild(iframe);
+  section.appendChild(summary);
+  section.appendChild(body);
   el.reference.appendChild(section);
 }
 function render(){
