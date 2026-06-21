@@ -36,9 +36,6 @@
       min-height:100vh;
     }
     header{
-      position:sticky;
-      top:0;
-      z-index:10;
       padding:14px 14px 8px;
       background:linear-gradient(180deg, rgba(0,0,0,.9), rgba(0,0,0,.72));
       backdrop-filter:blur(16px);
@@ -207,21 +204,15 @@
       gap:10px;
       min-width:0;
     }
-    .reference-dot{
-      width:10px;
-      height:10px;
-      flex:0 0 10px;
-      border-radius:999px;
-      background:var(--accent);
-      box-shadow:0 0 16px rgba(30,215,96,.45);
+    .reference-icon{
+      width:28px;
+      height:20px;
+      flex:0 0 28px;
+      display:block;
     }
     .reference-summary strong{
       font-size:15px;
       color:var(--ink);
-    }
-    .reference-summary span{
-      color:var(--muted);
-      font-size:12px;
     }
     .reference-actions{
       display:flex;
@@ -783,6 +774,7 @@ function renderYouTubeReference(song) {
   const youtubeEmbedUrl = getYouTubeEmbedUrl(youtubeUrl);
   el.reference.innerHTML = '';
   if (!youtubeEmbedUrl) return;
+  const youtubeIcon = '<svg class="reference-icon" viewBox="0 0 28 20" aria-hidden="true"><rect x="0" y="0" width="28" height="20" rx="6" fill="#FF0033"></rect><path d="M11 6.1L18 10L11 13.9V6.1Z" fill="#FFFFFF"></path></svg>';
 
   const section = document.createElement('details');
   section.className = 'reference-player';
@@ -793,18 +785,12 @@ function renderYouTubeReference(song) {
   const summaryText = document.createElement('div');
   summaryText.className = 'reference-summary';
 
-  const dot = document.createElement('span');
-  dot.className = 'reference-dot';
-
   const titleWrap = document.createElement('div');
   const title = document.createElement('strong');
   title.textContent = 'Referencia de YouTube';
-  const hint = document.createElement('span');
-  hint.textContent = 'Abrir solo cuando la necesites';
   titleWrap.appendChild(title);
-  titleWrap.appendChild(hint);
 
-  summaryText.appendChild(dot);
+  summaryText.insertAdjacentHTML('beforeend', youtubeIcon);
   summaryText.appendChild(titleWrap);
 
   const actions = document.createElement('div');
