@@ -6,116 +6,250 @@
   <title>Cancionero Transpositor</title>
   <style>
     :root{
-      --bg:#f6f1e8;
-      --paper:#fffdf8;
-      --ink:#221d18;
-      --muted:#70655b;
-      --line:#ddd0bf;
-      --accent:#6e4522;
-      --accent-soft:#f5e8d8;
-      --chord:#a36808;
+      --bg:#000000;
+      --bg-glow:#121212;
+      --panel:#121212;
+      --panel-soft:#181818;
+      --panel-raise:#202020;
+      --paper:#101010;
+      --ink:#ffffff;
+      --muted:#b3b3b3;
+      --line:#2a2a2a;
+      --accent:#1ed760;
+      --accent-strong:#1fdf64;
+      --accent-soft:#1db954;
+      --accent-wash:rgba(30,215,96,.16);
+      --chord:#1ed760;
       --font-size:15px;
-      --shadow:0 10px 24px rgba(74,52,28,.10);
+      --shadow:0 22px 50px rgba(0,0,0,.38);
+      --radius:22px;
     }
     *{box-sizing:border-box}
     html,body{margin:0;padding:0}
     body{
-      background:var(--bg);
+      background:
+        radial-gradient(circle at top left, rgba(30,215,96,.18), transparent 26%),
+        radial-gradient(circle at top right, rgba(40,40,40,.9), transparent 24%),
+        linear-gradient(180deg, #0a0a0a 0%, #000000 100%);
       color:var(--ink);
-      font-family:system-ui,-apple-system,"Segoe UI",sans-serif;
+      font-family:"Segoe UI",system-ui,-apple-system,sans-serif;
       min-height:100vh;
     }
     header{
-      background:rgba(246,241,232,.95);
-      border-bottom:1px solid var(--line);
-      padding:10px 12px;
+      position:sticky;
+      top:0;
+      z-index:10;
+      padding:14px 14px 8px;
+      background:linear-gradient(180deg, rgba(0,0,0,.9), rgba(0,0,0,.72));
+      backdrop-filter:blur(16px);
     }
-    .bar{max-width:760px;margin:0 auto;display:grid;gap:8px}
-    h1{margin:0;font-size:18px;line-height:1.1}
-    .controls{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+    .bar{
+      max-width:1180px;
+      margin:0 auto;
+      display:grid;
+      gap:14px;
+      padding:16px 18px;
+      border:1px solid rgba(255,255,255,.06);
+      border-radius:20px;
+      background:rgba(18,18,18,.92);
+      box-shadow:0 16px 40px rgba(0,0,0,.34);
+    }
+    h1{
+      margin:0;
+      font-size:28px;
+      line-height:1;
+      letter-spacing:-.04em;
+      font-weight:800;
+    }
+    .app-subtitle{
+      margin:4px 0 0;
+      color:var(--muted);
+      font-size:13px;
+      letter-spacing:.01em;
+    }
+    .brand{display:grid;gap:4px;align-content:start}
+    .controls{display:grid;grid-template-columns:1fr;gap:8px}
+    .config-row{display:grid;grid-template-columns:1fr;gap:8px}
     .wide{grid-column:1/-1}
-    label{display:block;margin:0 0 4px;font-size:11px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.06em}
+    label{
+      display:block;
+      margin:0 0 6px;
+      font-size:11px;
+      font-weight:700;
+      color:#8f8f8f;
+      text-transform:uppercase;
+      letter-spacing:.1em;
+    }
     select,button{
-      width:100%;min-height:40px;
-      border:1px solid var(--line);
-      border-radius:10px;
-      background:var(--paper);
+      width:100%;
+      min-height:46px;
+      border:1px solid rgba(255,255,255,.08);
+      border-radius:999px;
+      background:#242424;
       color:var(--ink);
-      padding:9px 10px;
+      padding:10px 14px;
       font-size:14px;
+      transition:transform .18s ease, border-color .18s ease, background .18s ease, box-shadow .18s ease;
     }
-    button{font-weight:700;background:var(--accent-soft);border-color:#d8b992}
+    select:focus,button:focus{
+      outline:none;
+      border-color:rgba(30,215,96,.68);
+      box-shadow:0 0 0 3px rgba(30,215,96,.16);
+    }
+    button{
+      font-weight:700;
+      background:#2a2a2a;
+      border-color:rgba(255,255,255,.08);
+      cursor:pointer;
+    }
+    button:hover{
+      transform:translateY(-1px);
+      background:#313131;
+      border-color:rgba(255,255,255,.14);
+    }
+    #resetBtn,
+    #fontUp{
+      background:var(--accent-soft);
+      color:#08120b;
+      border-color:transparent;
+    }
+    #resetBtn:hover,
+    #fontUp:hover{
+      background:var(--accent-strong);
+    }
     .stepper{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}
-    main{max-width:760px;margin:0 auto;padding:12px}
-    .sheet{
-      background:var(--paper);
-      border:1px solid var(--line);
-      border-radius:18px;
-      box-shadow:var(--shadow);
-      padding:16px 14px 26px;
+    .stepper.two{grid-template-columns:1fr 1fr}
+    main{
+      max-width:1180px;
+      margin:0 auto;
+      padding:6px 14px 28px;
     }
-    .song-head{border-bottom:1px solid var(--line);padding-bottom:10px;margin-bottom:14px}
-    .song-title{margin:0 0 6px;font-size:24px;line-height:1.05;letter-spacing:-.03em}
-    .meta{display:flex;gap:8px;flex-wrap:wrap}
-    .badge{display:inline-flex;align-items:center;padding:4px 9px;border:1px solid var(--line);border-radius:999px;background:#fff8ef;font-size:13px;color:var(--muted)}
+    .sheet{
+      position:relative;
+      overflow:hidden;
+      background:
+        linear-gradient(180deg, rgba(34,34,34,.92) 0%, rgba(18,18,18,.98) 180px, rgba(18,18,18,1) 100%);
+      border:1px solid rgba(255,255,255,.06);
+      border-radius:var(--radius);
+      box-shadow:var(--shadow);
+      padding:18px 16px 30px;
+    }
+    .sheet::before{
+      content:"";
+      position:absolute;
+      inset:0 0 auto;
+      height:220px;
+      background:
+        radial-gradient(circle at top left, rgba(30,215,96,.32), transparent 34%),
+        linear-gradient(180deg, rgba(42,42,42,.12), transparent 100%);
+      pointer-events:none;
+    }
+    .song-head{
+      position:relative;
+      z-index:1;
+      display:grid;
+      gap:12px;
+      padding:18px 0 18px;
+      margin-bottom:18px;
+      border-bottom:1px solid rgba(255,255,255,.08);
+    }
+    .song-title{
+      margin:0;
+      font-size:clamp(32px, 5vw, 64px);
+      line-height:.96;
+      letter-spacing:-.05em;
+      font-weight:900;
+      max-width:12ch;
+    }
+    .meta{display:flex;gap:10px;flex-wrap:wrap}
+    .badge{
+      display:inline-flex;
+      align-items:center;
+      min-height:34px;
+      padding:6px 12px;
+      border:1px solid rgba(255,255,255,.07);
+      border-radius:999px;
+      background:rgba(255,255,255,.06);
+      font-size:13px;
+      color:#f3f3f3;
+      backdrop-filter:blur(10px);
+    }
     .reference-player{
+      position:relative;
+      z-index:1;
       margin:0 0 24px;
-      padding:12px;
-      border:1px solid var(--line);
-      border-radius:14px;
-      background:#fff8ef;
+      padding:14px;
+      border:1px solid rgba(255,255,255,.06);
+      border-radius:20px;
+      background:rgba(255,255,255,.04);
     }
     .reference-label{
       display:flex;
       justify-content:space-between;
       align-items:center;
       gap:12px;
-      margin-bottom:10px;
+      margin-bottom:12px;
       font-size:14px;
       color:var(--muted);
     }
     .reference-label strong{
       color:var(--ink);
-      font-size:15px;
+      font-size:16px;
     }
-    .spotify-link{
-      color:var(--accent);
+    .reference-link{
+      color:#ffffff;
       text-decoration:none;
       font-size:13px;
       white-space:nowrap;
+      padding:8px 12px;
+      border-radius:999px;
+      background:rgba(255,255,255,.08);
     }
-    .spotify-link:hover{text-decoration:underline}
-    .spotify-frame{
+    .reference-link:hover{background:rgba(255,255,255,.14)}
+    .reference-frame{
       display:block;
       width:100%;
-      height:152px;
+      aspect-ratio:16/9;
+      min-height:220px;
       border:0;
-      border-radius:12px;
+      border-radius:16px;
     }
 
     #songBody{
+      position:relative;
+      z-index:1;
       font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,"Liberation Mono",monospace;
       font-size:var(--font-size);
-      line-height:1.14;
+      line-height:1.2;
       letter-spacing:0;
       font-variant-ligatures:none;
       text-rendering:optimizeSpeed;
+      color:#f6f6f6;
     }
     .section{
-      margin:18px 0 8px;
-      padding-top:10px;
-      border-top:1px solid var(--line);
+      margin:24px 0 10px;
+      padding-top:14px;
+      border-top:1px solid rgba(255,255,255,.08);
       font-family:system-ui,-apple-system,"Segoe UI",sans-serif;
-      font-size:13px;font-weight:800;color:var(--accent);
+      font-size:12px;
+      font-weight:800;
+      color:#d7d7d7;
       text-transform:uppercase;letter-spacing:.08em;
     }
     .comment{
       margin:6px 0 8px;
       font-family:system-ui,-apple-system,"Segoe UI",sans-serif;
-      font-size:12px;font-style:italic;color:var(--muted);
+      font-size:12px;
+      font-style:italic;
+      color:#8f8f8f;
     }
-    .empty{height:10px}
-    .pair{margin:1px 0 5px}
+    .empty{height:12px}
+    .pair{
+      margin:3px 0 9px;
+      padding:6px 10px;
+      border-radius:12px;
+      background:linear-gradient(180deg, rgba(255,255,255,.025), rgba(255,255,255,.01));
+    }
     .pair .chords,
     .pair .lyrics,
     .chord-row,
@@ -126,17 +260,40 @@
       max-width:100%;
     }
     .pair .chords,
-    .chord-row{color:var(--chord);font-weight:800;min-height:1.08em}
+    .chord-row{
+      color:var(--chord);
+      font-weight:800;
+      min-height:1.08em;
+      text-shadow:0 0 14px rgba(30,215,96,.14);
+    }
     .pair .lyrics,
     .plain-row{color:var(--ink)}
     .footer-actions{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:16px}
-    .note{margin-top:12px;padding:10px 12px;border:1px dashed var(--line);border-radius:12px;background:#fff8ef;color:var(--muted);font-size:12px;line-height:1.35}
+    .plain-row{
+      padding:2px 0;
+      color:#efefef;
+    }
+    .note{
+      position:relative;
+      z-index:1;
+      margin-top:18px;
+      padding:12px 14px;
+      border:1px solid rgba(255,255,255,.08);
+      border-radius:16px;
+      background:rgba(255,255,255,.045);
+      color:var(--muted);
+      font-size:12px;
+      line-height:1.45;
+    }
     @media (min-width:700px){
-      .controls{grid-template-columns:2fr 1fr 1fr}
+      .controls{grid-template-columns:1fr}
+      .config-row{grid-template-columns:1fr 1fr 1fr}
       .wide{grid-column:auto}
-      .sheet{padding:22px 26px 30px}
-      .song-title{font-size:28px}
-      h1{font-size:20px}
+      .sheet{padding:26px 28px 32px}
+    }
+    @media (min-width:980px){
+      .bar{grid-template-columns:minmax(280px, 1.3fr) minmax(520px, 2fr);align-items:end}
+      .controls{align-self:stretch}
     }
     @media print{
       header,.footer-actions,.note,.reference-player{display:none}
@@ -149,7 +306,10 @@
 <body>
   <header>
     <div class="bar">
-      <h1>Cancionero transpositor</h1>
+      <div class="brand">
+        <h1>Cancionero transpositor</h1>
+        <p class="app-subtitle">Modo cancionero en vivo, con transposición instantánea y estética tipo streaming.</p>
+      </div>
       <div class="controls">
         <div class="wide">
           <label for="songSelect">Canción</label>
@@ -299,7 +459,7 @@ function parseGvizSongs(res) {
   if (!res || !res.table || !res.table.cols || !res.table.rows) return [];
   const headers = res.table.cols.map((c, i) => String(c.label || c.id || ('col'+i)).trim().toLowerCase());
   const index = name => headers.indexOf(name);
-  const idx = { id:index('id'), title:index('title'), key:index('key'), body:index('body'), visible:index('visible'), notes:index('notes'), spotifyUrl:index('spotifyurl') };
+  const idx = { id:index('id'), title:index('title'), key:index('key'), body:index('body'), visible:index('visible'), notes:index('notes'), youtubeUrl:index('youtubeurl') };
   if (idx.title < 0 || idx.key < 0 || idx.body < 0) return [];
   return res.table.rows.map((r, n) => {
     const cells = r.c || [];
@@ -307,14 +467,14 @@ function parseGvizSongs(res) {
     const title = String(get(idx.title)).trim();
     const key = String(get(idx.key)).trim();
     const body = String(get(idx.body)).replace(/\r\n/g, '\n').trim();
-    const spotifyUrl = String(get(idx.spotifyUrl)).trim();
+    const youtubeUrl = String(get(idx.youtubeUrl)).trim();
     const visible = String(get(idx.visible) || 'TRUE').toUpperCase();
     if (!title || !key || !body || visible === 'FALSE' || visible === 'NO' || visible === '0') return null;
     let id = String(get(idx.id) || title).trim().toLowerCase()
       .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
       .replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
     if (!id) id = 'song-' + (n+1);
-    return { id, title, key, body, spotifyUrl };
+    return { id, title, key, body, youtubeUrl };
   }).filter(Boolean);
 }
 
@@ -351,7 +511,7 @@ function loadSongsCache() {
       title: song.title,
       key: song.key,
       body: song.body,
-      spotifyUrl: typeof song.spotifyUrl === 'string' ? song.spotifyUrl.trim() : ''
+      youtubeUrl: typeof song.youtubeUrl === 'string' ? song.youtubeUrl.trim() : ''
     }));
     if (!validSongs.length) return null;
     return {
@@ -406,6 +566,38 @@ const el = {
   body: document.getElementById('songBody'),
   sheet: document.getElementById('sheet')
 };
+function groupHeaderControls(){
+  const controls = document.querySelector('.controls');
+  const songPicker = controls && controls.querySelector('.wide');
+  const keyControl = el.keySelect && el.keySelect.parentElement;
+  const transposeStepper = document.getElementById('downBtn');
+  const transposeControl = transposeStepper && transposeStepper.closest('.stepper') && transposeStepper.closest('.stepper').parentElement;
+  const footerActions = document.querySelector('.footer-actions');
+  const fontDown = document.getElementById('fontDown');
+  const fontUp = document.getElementById('fontUp');
+  if (!controls || !songPicker || !keyControl || !transposeControl || !footerActions || !fontDown || !fontUp) return;
+
+  const row = document.createElement('div');
+  row.className = 'config-row';
+
+  const fontControl = document.createElement('div');
+  const fontLabel = document.createElement('label');
+  fontLabel.textContent = 'Letra';
+  const fontStepper = document.createElement('div');
+  fontStepper.className = 'stepper two';
+  fontDown.textContent = '−';
+  fontUp.textContent = '+';
+  fontStepper.appendChild(fontDown);
+  fontStepper.appendChild(fontUp);
+  fontControl.appendChild(fontLabel);
+  fontControl.appendChild(fontStepper);
+
+  row.appendChild(keyControl);
+  row.appendChild(transposeControl);
+  row.appendChild(fontControl);
+  controls.appendChild(row);
+  footerActions.remove();
+}
 function currentSong(){ return songs.find(s=>s.id===state.songId) || songs[0]; }
 function save(){
   localStorage.setItem('songId.v2', state.songId);
@@ -516,26 +708,36 @@ function renderLine(line, offset, preferFlats){
   });
   return box;
 }
-function getSpotifyEmbedUrl(url) {
+function getYouTubeEmbedUrl(url) {
   if (!url) return '';
   try {
     const parsedUrl = new URL(url);
-    const pathParts = parsedUrl.pathname.split('/').filter(Boolean);
-    const type = pathParts[0];
-    const id = pathParts[1];
-    const allowedTypes = ['track', 'album', 'playlist', 'artist', 'episode', 'show'];
-    if (parsedUrl.hostname !== 'open.spotify.com') return '';
-    if (!allowedTypes.includes(type) || !id) return '';
-    return `https://open.spotify.com/embed/${type}/${id}`;
+    const host = parsedUrl.hostname.replace(/^www\./, '').toLowerCase();
+    let videoId = '';
+
+    if (host === 'youtu.be') {
+      videoId = parsedUrl.pathname.split('/').filter(Boolean)[0] || '';
+    } else if (host === 'youtube.com' || host === 'm.youtube.com') {
+      if (parsedUrl.pathname === '/watch') {
+        videoId = parsedUrl.searchParams.get('v') || '';
+      } else if (parsedUrl.pathname.startsWith('/embed/')) {
+        videoId = parsedUrl.pathname.split('/').filter(Boolean)[1] || '';
+      } else if (parsedUrl.pathname.startsWith('/shorts/')) {
+        videoId = parsedUrl.pathname.split('/').filter(Boolean)[1] || '';
+      }
+    }
+
+    if (!/^[a-zA-Z0-9_-]{11}$/.test(videoId)) return '';
+    return `https://www.youtube.com/embed/${videoId}`;
   } catch {
     return '';
   }
 }
-function renderSpotifyReference(song) {
-  const spotifyUrl = typeof song.spotifyUrl === 'string' ? song.spotifyUrl.trim() : '';
-  const spotifyEmbedUrl = getSpotifyEmbedUrl(spotifyUrl);
+function renderYouTubeReference(song) {
+  const youtubeUrl = typeof song.youtubeUrl === 'string' ? song.youtubeUrl.trim() : '';
+  const youtubeEmbedUrl = getYouTubeEmbedUrl(youtubeUrl);
   el.reference.innerHTML = '';
-  if (!spotifyEmbedUrl) return;
+  if (!youtubeEmbedUrl) return;
 
   const section = document.createElement('section');
   section.className = 'reference-player';
@@ -547,17 +749,19 @@ function renderSpotifyReference(song) {
   title.textContent = 'Referencia';
 
   const link = document.createElement('a');
-  link.className = 'spotify-link';
-  link.href = spotifyUrl;
+  link.className = 'reference-link';
+  link.href = youtubeUrl;
   link.target = '_blank';
   link.rel = 'noopener noreferrer';
-  link.textContent = 'Abrir en Spotify';
+  link.textContent = 'Abrir en YouTube';
 
   const iframe = document.createElement('iframe');
-  iframe.className = 'spotify-frame';
-  iframe.src = spotifyEmbedUrl;
-  iframe.allow = 'autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture';
+  iframe.className = 'reference-frame';
+  iframe.src = youtubeEmbedUrl;
+  iframe.allow = 'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share';
   iframe.loading = 'lazy';
+  iframe.referrerPolicy = 'strict-origin-when-cross-origin';
+  iframe.allowFullscreen = true;
 
   label.appendChild(title);
   label.appendChild(link);
@@ -577,12 +781,13 @@ function render(){
   el.currentKey.textContent = 'Actual: ' + currentKey;
   const off = normalizeOffset(state.offset);
   el.semitones.textContent = off === 0 ? 'Sin transponer' : (off > 0 ? `+${off} semitonos` : `${off} semitonos`);
-  renderSpotifyReference(song);
+  renderYouTubeReference(song);
   el.body.innerHTML = '';
   song.body.split('\n').forEach(line => el.body.appendChild(renderLine(line, state.offset, preferFlats)));
   save();
 }
 
+groupHeaderControls();
 populateSongs();
 render();
 if (currentSongsSource === 'cache') {
