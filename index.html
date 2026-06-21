@@ -26,9 +26,7 @@
       min-height:100vh;
     }
     header{
-      position:sticky;top:0;z-index:30;
       background:rgba(246,241,232,.95);
-      backdrop-filter:blur(10px);
       border-bottom:1px solid var(--line);
       padding:10px 12px;
     }
@@ -60,6 +58,40 @@
     .song-title{margin:0 0 6px;font-size:24px;line-height:1.05;letter-spacing:-.03em}
     .meta{display:flex;gap:8px;flex-wrap:wrap}
     .badge{display:inline-flex;align-items:center;padding:4px 9px;border:1px solid var(--line);border-radius:999px;background:#fff8ef;font-size:13px;color:var(--muted)}
+    .reference-player{
+      margin:0 0 24px;
+      padding:12px;
+      border:1px solid var(--line);
+      border-radius:14px;
+      background:#fff8ef;
+    }
+    .reference-label{
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      gap:12px;
+      margin-bottom:10px;
+      font-size:14px;
+      color:var(--muted);
+    }
+    .reference-label strong{
+      color:var(--ink);
+      font-size:15px;
+    }
+    .spotify-link{
+      color:var(--accent);
+      text-decoration:none;
+      font-size:13px;
+      white-space:nowrap;
+    }
+    .spotify-link:hover{text-decoration:underline}
+    .spotify-frame{
+      display:block;
+      width:100%;
+      height:152px;
+      border:0;
+      border-radius:12px;
+    }
 
     #songBody{
       font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,"Liberation Mono",monospace;
@@ -107,7 +139,7 @@
       h1{font-size:20px}
     }
     @media print{
-      header,.footer-actions,.note{display:none}
+      header,.footer-actions,.note,.reference-player{display:none}
       body{background:white}
       main{padding:0;max-width:none}
       .sheet{border:0;box-shadow:none;border-radius:0}
@@ -149,6 +181,7 @@
           <span class="badge" id="semitones"></span>
         </div>
       </div>
+      <div id="songReference"></div>
       <div id="songBody"></div>
       <div class="footer-actions">
         <button id="fontDown" type="button">Letra −</button>
@@ -266,7 +299,7 @@ function parseGvizSongs(res) {
   if (!res || !res.table || !res.table.cols || !res.table.rows) return [];
   const headers = res.table.cols.map((c, i) => String(c.label || c.id || ('col'+i)).trim().toLowerCase());
   const index = name => headers.indexOf(name);
-  const idx = { id:index('id'), title:index('title'), key:index('key'), body:index('body'), visible:index('visible'), notes:index('notes') };
+  const idx = { id:index('id'), title:index('title'), key:index('key'), body:index('body'), visible:index('visible'), notes:index('notes'), spotifyUrl:index('spotifyurl') };
   if (idx.title < 0 || idx.key < 0 || idx.body < 0) return [];
   return res.table.rows.map((r, n) => {
     const cells = r.c || [];
@@ -274,13 +307,14 @@ function parseGvizSongs(res) {
     const title = String(get(idx.title)).trim();
     const key = String(get(idx.key)).trim();
     const body = String(get(idx.body)).replace(/\r\n/g, '\n').trim();
+    const spotifyUrl = String(get(idx.spotifyUrl)).trim();
     const visible = String(get(idx.visible) || 'TRUE').toUpperCase();
     if (!title || !key || !body || visible === 'FALSE' || visible === 'NO' || visible === '0') return null;
     let id = String(get(idx.id) || title).trim().toLowerCase()
       .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
       .replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
     if (!id) id = 'song-' + (n+1);
-    return { id, title, key, body };
+    return { id, title, key, body, spotifyUrl };
   }).filter(Boolean);
 }
 
@@ -316,7 +350,8 @@ function loadSongsCache() {
       id: song.id,
       title: song.title,
       key: song.key,
-      body: song.body
+      body: song.body,
+      spotifyUrl: typeof song.spotifyUrl === 'string' ? song.spotifyUrl.trim() : ''
     }));
     if (!validSongs.length) return null;
     return {
@@ -367,6 +402,7 @@ const el = {
   originalKey: document.getElementById('originalKey'),
   currentKey: document.getElementById('currentKey'),
   semitones: document.getElementById('semitones'),
+  reference: document.getElementById('songReference'),
   body: document.getElementById('songBody'),
   sheet: document.getElementById('sheet')
 };
@@ -480,6 +516,55 @@ function renderLine(line, offset, preferFlats){
   });
   return box;
 }
+function getSpotifyEmbedUrl(url) {
+  if (!url) return '';
+  try {
+    const parsedUrl = new URL(url);
+    const pathParts = parsedUrl.pathname.split('/').filter(Boolean);
+    const type = pathParts[0];
+    const id = pathParts[1];
+    const allowedTypes = ['track', 'album', 'playlist', 'artist', 'episode', 'show'];
+    if (parsedUrl.hostname !== 'open.spotify.com') return '';
+    if (!allowedTypes.includes(type) || !id) return '';
+    return `https://open.spotify.com/embed/${type}/${id}`;
+  } catch {
+    return '';
+  }
+}
+function renderSpotifyReference(song) {
+  const spotifyUrl = typeof song.spotifyUrl === 'string' ? song.spotifyUrl.trim() : '';
+  const spotifyEmbedUrl = getSpotifyEmbedUrl(spotifyUrl);
+  el.reference.innerHTML = '';
+  if (!spotifyEmbedUrl) return;
+
+  const section = document.createElement('section');
+  section.className = 'reference-player';
+
+  const label = document.createElement('div');
+  label.className = 'reference-label';
+
+  const title = document.createElement('strong');
+  title.textContent = 'Referencia';
+
+  const link = document.createElement('a');
+  link.className = 'spotify-link';
+  link.href = spotifyUrl;
+  link.target = '_blank';
+  link.rel = 'noopener noreferrer';
+  link.textContent = 'Abrir en Spotify';
+
+  const iframe = document.createElement('iframe');
+  iframe.className = 'spotify-frame';
+  iframe.src = spotifyEmbedUrl;
+  iframe.allow = 'autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture';
+  iframe.loading = 'lazy';
+
+  label.appendChild(title);
+  label.appendChild(link);
+  section.appendChild(label);
+  section.appendChild(iframe);
+  el.reference.appendChild(section);
+}
 function render(){
   const song = currentSong();
   const preferFlats = song.key.includes('b') || targetKeyName(song, state.offset, false).includes('b');
@@ -492,6 +577,7 @@ function render(){
   el.currentKey.textContent = 'Actual: ' + currentKey;
   const off = normalizeOffset(state.offset);
   el.semitones.textContent = off === 0 ? 'Sin transponer' : (off > 0 ? `+${off} semitonos` : `${off} semitonos`);
+  renderSpotifyReference(song);
   el.body.innerHTML = '';
   song.body.split('\n').forEach(line => el.body.appendChild(renderLine(line, state.offset, preferFlats)));
   save();
