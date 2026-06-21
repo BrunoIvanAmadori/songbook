@@ -48,7 +48,7 @@
       min-height:100vh;
     }
     header{
-      padding:10px 12px 6px;
+      padding:0 0 6px;
       background:transparent;
       backdrop-filter:none;
     }
@@ -70,15 +70,24 @@
       letter-spacing:-.04em;
       font-weight:800;
     }
-    .app-subtitle{
-      margin:3px 0 0;
-      color:var(--muted);
-      font-size:12px;
-      line-height:1.35;
-      letter-spacing:.01em;
+    .brand{
+      display:grid;
+      gap:3px;
+      align-content:start;
+      width:100%;
+      padding:14px 16px 12px;
+      background:rgba(18,18,18,.96);
+      border-top:1px solid rgba(255,255,255,.06);
+      border-bottom:1px solid rgba(255,255,255,.08);
+      box-shadow:0 10px 24px rgba(0,0,0,.22);
     }
-    .brand{display:grid;gap:3px;align-content:start}
-    .controls{display:grid;grid-template-columns:1fr;gap:8px}
+    .app-subtitle{display:none}
+    .controls{
+      display:grid;
+      grid-template-columns:1fr;
+      gap:8px;
+      padding:0 12px;
+    }
     .config-row{
       display:grid;
       grid-template-columns:minmax(92px, 1.1fr) minmax(132px, 1fr) minmax(108px, .9fr);
@@ -243,16 +252,6 @@
       padding:0 12px 12px;
       border:1px solid rgba(255,255,255,.06);
     }
-    .reference-link{
-      color:#ffffff;
-      text-decoration:none;
-      font-size:12px;
-      white-space:nowrap;
-      padding:7px 10px;
-      border-radius:var(--radius-pill);
-      background:rgba(255,255,255,.08);
-    }
-    .reference-link:hover{background:rgba(255,255,255,.14)}
     .reference-frame{
       display:block;
       width:100%;
@@ -338,7 +337,16 @@
       .wide{grid-column:auto}
       header{padding:14px 18px 8px}
       .bar{gap:12px}
-      .controls{gap:10px}
+      .brand{
+        padding:0;
+        background:transparent;
+        border:0;
+        box-shadow:none;
+      }
+      .controls{
+        gap:10px;
+        padding:0;
+      }
       main{padding:6px 18px 28px}
       .sheet{padding:22px 24px 28px}
       .song-head{gap:12px;padding:14px 0 16px;margin-bottom:16px}
@@ -606,7 +614,8 @@ if (cachedSongs && cachedSongs.songs.length) {
 const state = {
   songId: localStorage.getItem('songId.v2') || songs[0].id,
   offset: Number(localStorage.getItem('offset.v2') || 0),
-  fontSize: Number(localStorage.getItem('fontSize.v2') || 15)
+  fontSize: Number(localStorage.getItem('fontSize.v2') || 15),
+  referenceOpenBySongId: {}
 };
 const el = {
   songSelect: document.getElementById('songSelect'),
@@ -818,6 +827,10 @@ function renderYouTubeReference(song) {
 
   const section = document.createElement('details');
   section.className = 'reference-player';
+  section.open = !!state.referenceOpenBySongId[song.id];
+  section.addEventListener('toggle', () => {
+    state.referenceOpenBySongId[song.id] = section.open;
+  });
 
   const summary = document.createElement('summary');
   summary.className = 'reference-toggle';
@@ -836,19 +849,11 @@ function renderYouTubeReference(song) {
   const actions = document.createElement('div');
   actions.className = 'reference-actions';
 
-  const link = document.createElement('a');
-  link.className = 'reference-link';
-  link.href = youtubeUrl;
-  link.target = '_blank';
-  link.rel = 'noopener noreferrer';
-  link.textContent = 'Abrir';
-  link.addEventListener('click', e => e.stopPropagation());
 
   const chevron = document.createElement('span');
   chevron.className = 'reference-chevron';
   chevron.textContent = '▾';
 
-  actions.appendChild(link);
   actions.appendChild(chevron);
   summary.appendChild(summaryText);
   summary.appendChild(actions);
