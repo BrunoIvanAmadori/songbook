@@ -214,6 +214,9 @@
       border-radius:14px;
       background:rgba(255,255,255,.04);
     }
+    .editor-panel[hidden]{
+      display:none !important;
+    }
     .editor-grid{
       display:grid;
       gap:10px;
@@ -972,7 +975,11 @@ function renderEditorState() {
   el.toggleEditBtn.classList.toggle('active', state.isEditing);
   el.toggleEditBtn.textContent = state.isEditing ? 'Volver a vista' : 'Editar';
   const locked = !state.canEdit || state.isSaving || state.isCheckingPermissions;
-  [el.editTitle, el.editKey, el.editYoutubeUrl, el.editBody, el.saveSongBtn].forEach(node => { node.disabled = locked; });
+  [el.editTitle, el.editKey, el.editYoutubeUrl, el.editBody].forEach(node => {
+    node.readOnly = locked;
+    node.disabled = false;
+  });
+  el.saveSongBtn.disabled = locked;
   el.reloadSongBtn.disabled = state.isSaving;
   el.cancelEditBtn.disabled = state.isSaving;
   let message = state.editorMessage;
@@ -1070,6 +1077,9 @@ async function enterEditMode() {
   syncDraftToForm();
   render();
   await refreshEditorStatus();
+  if (state.canEdit) {
+    el.editBody.focus({ preventScroll: true });
+  }
 }
 function leaveEditMode(forceDiscard) {
   if (!state.isEditing) return;
