@@ -184,6 +184,7 @@ function targetKeyName(song, offset, preferFlats){ const pk=parseKey(song.key); 
 
 const SHEET_ID = '1ODcMNnguu-pHW6BK7zbOGSMRYkgwQiDac5YPsjS7Smc';
 const SHEET_NAME = 'Songs';
+const SONGS_CACHE_KEY = 'songs.cache.v1';
 let songs = [
   {
     "id": "la-oma",
@@ -222,6 +223,9 @@ let songs = [
     "body": "{section: Verso 1}\n[Am]De tu palo soy [Dm]hijo de tu [E7]cuero [Am]\nSoy el olvidao en la [F]alcancía del [B7]tiempo [E7]\nEl que se que[Dm]dó de [C]pie ponién[E7]dole el [Am]pecho\n\n{section: Verso 2}\n[Am]Flor obrera soy [Dm]silvestre de [E7]espuma [Am]\nCuando el tren se va miro en las [F]vías la [B7]luna [E7]\nPensando tal [Dm]vez mi [C]pueblo encuen[E7]tre for[Am]tuna\n\n{section: Verso 3}\n[Am]Mi bofe se hin[Dm]chó cuando repar[E7]tieron [Am]\nDe mí no se acuerdan dicen que [F]nunca me [B7]vieron [E7]\nQue no soy de [Dm]aquí, que ya [C]no tengo re[E7]medio [Am]\n\n{section: Estribillo}\n[Am]Soy el olvidao [Dm]el mismo que un [E7]día [Am]\nSe puso de pie tragando [F]tierra y sa[G]liva [C]\nCamino hacia el [Dm]sol para cu[Am]rar las he[E7]ridas [Am]\n\n{section: Verso 4}\n[Am]Una herida soy [Dm]buscando el sa[E7]lario [Am]\nMaestro de pie cuidando [F]pichones [B7]blancos [E7]\nQue madu[Dm]rarán ilumi[C]nando tu [E7]pago [Am]\n\n{section: Verso 5}\n[Am]Soy el que quedó [Dm]en medio los [E7]ranchos [Am]\nGuacho del fiao a mate y [F]guiso inven[B7]tado [E7]\nHambre y rebe[Dm]lión fueron cre[Am]ciendo en mis [E7]brazos [Am]\n\n{section: Verso 6}\n[Am]No quiero de más [Dm]quiero lo que es [E7]mío [Am]\nAl mazo tram[F]piao voy a tor[Dm]cerle el des[B7]tino [E7]\nLevan[Dm]tate cagón que aquí [Am]canta un argen[E7]tino! [Am]\n\n{section: Estribillo}\n[Am]Soy el olvidao [Dm]el mismo que un [E7]día [Am]\nSe puso de pie tragando [F]tierra y sa[G]liva [C]\nCamino hacia el [Dm]sol para cu[Am]rar las he[E7]ridas [Am]"
   }
 ];
+const EMBEDDED_SONGS = songs.map(song => ({ ...song }));
+let cachedSongsMeta = null;
+let currentSongsSource = 'embedded';
 
 function loadSongsFromGoogleSheet() {
   return new Promise((resolve, reject) => {
@@ -280,11 +284,75 @@ function parseGvizSongs(res) {
   }).filter(Boolean);
 }
 
+function saveSongsCache(remoteSongs) {
+  try {
+    const payload = {
+      savedAt: new Date().toISOString(),
+      songs: remoteSongs
+    };
+    localStorage.setItem(SONGS_CACHE_KEY, JSON.stringify(payload));
+    cachedSongsMeta = payload;
+  } catch (err) {
+    console.warn('No pude guardar la copia local de canciones.', err);
+  }
+}
+
+function loadSongsCache() {
+  try {
+    const raw = localStorage.getItem(SONGS_CACHE_KEY);
+    if (!raw) return null;
+    const payload = JSON.parse(raw);
+    if (!payload || !Array.isArray(payload.songs)) return null;
+    const validSongs = payload.songs.filter(song => (
+      song &&
+      typeof song.id === 'string' &&
+      typeof song.title === 'string' &&
+      typeof song.key === 'string' &&
+      typeof song.body === 'string' &&
+      song.title.trim() &&
+      song.key.trim() &&
+      song.body.trim()
+    )).map(song => ({
+      id: song.id,
+      title: song.title,
+      key: song.key,
+      body: song.body
+    }));
+    if (!validSongs.length) return null;
+    return {
+      savedAt: payload.savedAt || '',
+      songs: validSongs
+    };
+  } catch (err) {
+    console.warn('No pude leer la copia local de canciones.', err);
+    return null;
+  }
+}
+
+function formatCachedAt(savedAt) {
+  if (!savedAt) return '';
+  try {
+    return new Date(savedAt).toLocaleString('es-AR', {
+      dateStyle: 'short',
+      timeStyle: 'short'
+    });
+  } catch (err) {
+    return savedAt;
+  }
+}
+
 function setSourceStatus(message, ok) {
   const note = document.querySelector('.note');
   if (!note) return;
   note.innerHTML = message;
   note.style.borderColor = ok ? '#b7d7b7' : '#ddd0bf';
+}
+
+const cachedSongs = loadSongsCache();
+if (cachedSongs && cachedSongs.songs.length) {
+  songs = cachedSongs.songs;
+  cachedSongsMeta = cachedSongs;
+  currentSongsSource = 'cache';
 }
 
 const state = {
@@ -431,20 +499,49 @@ function render(){
 
 populateSongs();
 render();
+if (currentSongsSource === 'cache') {
+  const cachedAt = formatCachedAt(cachedSongsMeta && cachedSongsMeta.savedAt);
+  setSourceStatus(
+    `Mostrando la copia guardada localmente mientras intento sincronizar con Google Sheets.${cachedAt ? ` Ultima sincronizacion: ${cachedAt}.` : ''}`,
+    true
+  );
+}
 loadSongsFromGoogleSheet()
   .then(remoteSongs => {
     if (remoteSongs && remoteSongs.length) {
+      saveSongsCache(remoteSongs);
       songs = remoteSongs;
+      currentSongsSource = 'remote';
       if (!songs.find(s => s.id === state.songId)) { state.songId = songs[0].id; state.offset = 0; }
       populateSongs();
       render();
-      setSourceStatus('Fuente: Google Sheet central cargada correctamente. Cuando agreguemos nuevas canciones a la hoja, aparecerán acá al recargar.', true);
+      setSourceStatus('Fuente: Google Sheet central cargada correctamente. Tambien guarde una copia local para usarla sin conexion si hace falta.', true);
     } else {
+      if (currentSongsSource === 'cache') {
+        const cachedAt = formatCachedAt(cachedSongsMeta && cachedSongsMeta.savedAt);
+        setSourceStatus(`No encontre canciones validas en la Google Sheet. Sigo usando la copia local guardada.${cachedAt ? ` Ultima sincronizacion: ${cachedAt}.` : ''}`, false);
+        return;
+      }
+      songs = EMBEDDED_SONGS.map(song => ({ ...song }));
+      currentSongsSource = 'embedded';
+      if (!songs.find(s => s.id === state.songId)) { state.songId = songs[0].id; state.offset = 0; }
+      populateSongs();
+      render();
       setSourceStatus('No encontré canciones válidas en la Google Sheet. Estoy usando la copia local incluida en este archivo.', false);
     }
   })
   .catch(err => {
     console.warn(err);
+    if (currentSongsSource === 'cache') {
+      const cachedAt = formatCachedAt(cachedSongsMeta && cachedSongsMeta.savedAt);
+      setSourceStatus(`No pude leer la Google Sheet central. Estoy usando la copia local guardada.${cachedAt ? ` Ultima sincronizacion: ${cachedAt}.` : ''}`, false);
+      return;
+    }
+    songs = EMBEDDED_SONGS.map(song => ({ ...song }));
+    currentSongsSource = 'embedded';
+    if (!songs.find(s => s.id === state.songId)) { state.songId = songs[0].id; state.offset = 0; }
+    populateSongs();
+    render();
     setSourceStatus('No pude leer la Google Sheet central todavía. Estoy usando la copia local incluida. Para activar la base central: en Google Sheets, Archivo → Compartir → Publicar en la web, pestaña Songs.', false);
   });
 window.addEventListener('resize', render);
