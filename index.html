@@ -20,9 +20,21 @@
       --accent-soft:#1db954;
       --accent-wash:rgba(30,215,96,.16);
       --chord:#1ed760;
+      --lyrics-default:#efefef;
+      --lyrics-style-1:#f6f1c2;
+      --lyrics-style-2:#cfe8ff;
+      --lyrics-style-3:#ffd7c2;
       --font-size:15px;
       --shadow:0 22px 50px rgba(0,0,0,.38);
-      --radius:22px;
+      --radius:16px;
+      --radius-compact:10px;
+      --radius-pill:999px;
+      --space-1:4px;
+      --space-2:8px;
+      --space-3:12px;
+      --space-4:16px;
+      --space-5:20px;
+      --space-6:24px;
     }
     *{box-sizing:border-box}
     html,body{margin:0;padding:0}
@@ -36,7 +48,7 @@
       min-height:100vh;
     }
     header{
-      padding:14px 14px 8px;
+      padding:10px 12px 6px;
       background:transparent;
       backdrop-filter:none;
     }
@@ -44,7 +56,7 @@
       max-width:1180px;
       margin:0 auto;
       display:grid;
-      gap:14px;
+      gap:10px;
       padding:0;
       border:0;
       border-radius:0;
@@ -53,45 +65,46 @@
     }
     h1{
       margin:0;
-      font-size:28px;
-      line-height:1;
+      font-size:26px;
+      line-height:.96;
       letter-spacing:-.04em;
       font-weight:800;
     }
     .app-subtitle{
-      margin:4px 0 0;
+      margin:3px 0 0;
       color:var(--muted);
-      font-size:13px;
+      font-size:12px;
+      line-height:1.35;
       letter-spacing:.01em;
     }
-    .brand{display:grid;gap:4px;align-content:start}
-    .controls{display:grid;grid-template-columns:1fr;gap:10px}
+    .brand{display:grid;gap:3px;align-content:start}
+    .controls{display:grid;grid-template-columns:1fr;gap:8px}
     .config-row{
       display:grid;
       grid-template-columns:minmax(92px, 1.1fr) minmax(132px, 1fr) minmax(108px, .9fr);
-      gap:8px;
+      gap:6px;
       align-items:end;
     }
-    .control-compact label{margin-bottom:5px}
+    .control-compact label{margin-bottom:4px}
     .wide{grid-column:1/-1}
     label{
       display:block;
-      margin:0 0 6px;
-      font-size:11px;
+      margin:0 0 5px;
+      font-size:10px;
       font-weight:700;
-      color:#8f8f8f;
+      color:#8a8a8a;
       text-transform:uppercase;
-      letter-spacing:.1em;
+      letter-spacing:.12em;
     }
     select,button{
       width:100%;
-      min-height:42px;
+      min-height:40px;
       border:1px solid rgba(255,255,255,.08);
-      border-radius:999px;
+      border-radius:var(--radius-pill);
       background:#242424;
       color:var(--ink);
-      padding:8px 12px;
-      font-size:13px;
+      padding:7px 11px;
+      font-size:12px;
       transition:transform .18s ease, border-color .18s ease, background .18s ease, box-shadow .18s ease;
     }
     select:focus,button:focus{
@@ -120,13 +133,13 @@
     #fontUp:hover{
       background:var(--accent-strong);
     }
-    .stepper{display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px}
+    .stepper{display:grid;grid-template-columns:1fr 1fr 1fr;gap:5px}
     .stepper.two{grid-template-columns:1fr 1fr}
-    .stepper button{min-height:38px;padding:8px 0}
+    .stepper button{min-height:38px;padding:7px 0}
     main{
       max-width:1180px;
       margin:0 auto;
-      padding:6px 14px 28px;
+      padding:4px 12px 20px;
     }
     .sheet{
       position:relative;
@@ -135,15 +148,15 @@
       border:1px solid rgba(255,255,255,.06);
       border-radius:var(--radius);
       box-shadow:var(--shadow);
-      padding:18px 16px 30px;
+      padding:14px 12px 20px;
     }
     .song-head{
       position:relative;
       z-index:1;
       display:grid;
-      gap:12px;
-      padding:18px 0 18px;
-      margin-bottom:18px;
+      gap:10px;
+      padding:8px 0 14px;
+      margin-bottom:14px;
       border-bottom:1px solid rgba(255,255,255,.08);
     }
     .song-head::before{
@@ -159,31 +172,31 @@
     }
     .song-title{
       margin:0;
-      font-size:clamp(32px, 5vw, 64px);
-      line-height:.96;
+      font-size:clamp(28px, 8vw, 64px);
+      line-height:.94;
       letter-spacing:-.05em;
       font-weight:900;
-      max-width:12ch;
+      max-width:13ch;
     }
-    .meta{display:flex;gap:10px;flex-wrap:wrap}
+    .meta{display:flex;gap:8px;flex-wrap:wrap}
     .badge{
       display:inline-flex;
       align-items:center;
-      min-height:34px;
-      padding:6px 12px;
+      min-height:30px;
+      padding:5px 10px;
       border:1px solid rgba(255,255,255,.07);
-      border-radius:999px;
-      background:rgba(255,255,255,.06);
-      font-size:13px;
+      border-radius:var(--radius-pill);
+      background:rgba(255,255,255,.05);
+      font-size:12px;
       color:#f3f3f3;
-      backdrop-filter:blur(10px);
+      backdrop-filter:blur(8px);
     }
     .reference-player{
       position:relative;
       z-index:1;
-      margin:0 0 24px;
+      margin:0 0 16px;
       border:1px solid rgba(255,255,255,.06);
-      border-radius:20px;
+      border-radius:14px;
       background:rgba(255,255,255,.04);
       overflow:hidden;
     }
@@ -192,8 +205,8 @@
       display:flex;
       align-items:center;
       justify-content:space-between;
-      gap:12px;
-      padding:14px;
+      gap:10px;
+      padding:11px 12px;
       cursor:pointer;
     }
     .reference-toggle::-webkit-details-marker{display:none}
@@ -201,7 +214,7 @@
     .reference-summary{
       display:flex;
       align-items:center;
-      gap:10px;
+      gap:8px;
       min-width:0;
     }
     .reference-icon{
@@ -211,32 +224,32 @@
       display:block;
     }
     .reference-summary strong{
-      font-size:15px;
+      font-size:14px;
       color:var(--ink);
     }
     .reference-actions{
       display:flex;
       align-items:center;
-      gap:10px;
+      gap:8px;
       flex-shrink:0;
     }
     .reference-chevron{
       color:var(--muted);
-      font-size:16px;
+      font-size:14px;
       transition:transform .18s ease;
     }
     .reference-player[open] .reference-chevron{transform:rotate(180deg)}
     .reference-body{
-      padding:0 14px 14px;
+      padding:0 12px 12px;
       border:1px solid rgba(255,255,255,.06);
     }
     .reference-link{
       color:#ffffff;
       text-decoration:none;
-      font-size:13px;
+      font-size:12px;
       white-space:nowrap;
-      padding:8px 12px;
-      border-radius:999px;
+      padding:7px 10px;
+      border-radius:var(--radius-pill);
       background:rgba(255,255,255,.08);
     }
     .reference-link:hover{background:rgba(255,255,255,.14)}
@@ -244,9 +257,9 @@
       display:block;
       width:100%;
       aspect-ratio:16/9;
-      min-height:220px;
+      min-height:200px;
       border:0;
-      border-radius:16px;
+      border-radius:12px;
     }
 
     #songBody{
@@ -261,28 +274,26 @@
       color:#f6f6f6;
     }
     .section{
-      margin:24px 0 10px;
-      padding-top:14px;
+      margin:18px 0 8px;
+      padding-top:10px;
       border-top:1px solid rgba(255,255,255,.08);
       font-family:system-ui,-apple-system,"Segoe UI",sans-serif;
-      font-size:12px;
+      font-size:11px;
       font-weight:800;
-      color:#d7d7d7;
-      text-transform:uppercase;letter-spacing:.08em;
+      color:#d1d1d1;
+      text-transform:uppercase;letter-spacing:.11em;
     }
     .comment{
-      margin:6px 0 8px;
+      margin:4px 0 6px;
       font-family:system-ui,-apple-system,"Segoe UI",sans-serif;
-      font-size:12px;
+      font-size:11px;
       font-style:italic;
-      color:#8f8f8f;
+      color:#909090;
     }
-    .empty{height:12px}
+    .empty{height:8px}
     .pair{
-      margin:3px 0 9px;
-      padding:6px 10px;
-      border-radius:12px;
-      background:linear-gradient(180deg, rgba(255,255,255,.025), rgba(255,255,255,.01));
+      margin:2px 0 6px;
+      padding:1px 0;
     }
     .pair .chords,
     .pair .lyrics,
@@ -298,29 +309,40 @@
       color:var(--chord);
       font-weight:800;
       min-height:1.08em;
-      text-shadow:0 0 14px rgba(30,215,96,.14);
+      text-shadow:0 0 10px rgba(30,215,96,.12);
     }
     .pair .lyrics,
-    .plain-row{color:var(--ink)}
+    .plain-row{color:var(--lyrics-default)}
+    .line-style-1 .lyrics,
+    .plain-row.line-style-1{color:var(--lyrics-style-1)}
+    .line-style-2 .lyrics,
+    .plain-row.line-style-2{color:var(--lyrics-style-2)}
+    .line-style-3 .lyrics,
+    .plain-row.line-style-3{color:var(--lyrics-style-3)}
     .plain-row{
-      padding:2px 0;
-      color:#efefef;
+      padding:1px 0;
     }
     .note{
       position:relative;
       z-index:1;
-      margin-top:18px;
-      padding:12px 14px;
+      margin-top:14px;
+      padding:10px 11px;
       border:1px solid rgba(255,255,255,.08);
-      border-radius:16px;
-      background:rgba(255,255,255,.045);
+      border-radius:12px;
+      background:rgba(255,255,255,.04);
       color:var(--muted);
-      font-size:12px;
+      font-size:11px;
       line-height:1.45;
     }
     @media (min-width:700px){
       .wide{grid-column:auto}
-      .sheet{padding:26px 28px 32px}
+      header{padding:14px 18px 8px}
+      .bar{gap:12px}
+      .controls{gap:10px}
+      main{padding:6px 18px 28px}
+      .sheet{padding:22px 24px 28px}
+      .song-head{gap:12px;padding:14px 0 16px;margin-bottom:16px}
+      .pair{padding:1px 0}
     }
     @media (min-width:980px){
       .bar{grid-template-columns:minmax(280px, 1.3fr) minmax(520px, 2fr);align-items:end}
@@ -653,7 +675,10 @@ function populateKeys(){
   if(keys.includes(current)) el.keySelect.value = current;
 }
 function getMaxCols(){
-  const sheetWidth = el.sheet.clientWidth - 28;
+  const isMobile = window.innerWidth < 700;
+  const sheetInset = isMobile ? 24 : 48;
+  const rowInset = isMobile ? 12 : 16;
+  const sheetWidth = el.sheet.clientWidth - sheetInset - rowInset;
   const charWidth = state.fontSize * 0.61;
   return Math.max(26, Math.min(48, Math.floor(sheetWidth / charWidth)));
 }
@@ -702,8 +727,21 @@ function buildChordLine(width, placements, start, end, offset, preferFlats){
   });
   return arr.join('').replace(/\s+$/,'');
 }
-function renderPair(chords, lyrics){
+function normalizeLyricsStyleToken(value){
+  const token = String(value || '').trim().toLowerCase();
+  if (!token || token === 'default' || token === 'normal' || token === 'base' || token === '0' || token === 'off') return '';
+  if (token === '1' || token === 'style-1' || token === 'chorus-1' || token === 'coro-1') return '1';
+  if (token === '2' || token === 'style-2' || token === 'chorus-2' || token === 'coro-2') return '2';
+  if (token === '3' || token === 'style-3' || token === 'chorus-3' || token === 'coro-3') return '3';
+  return '';
+}
+function applyLyricsStyleClass(node, lyricsStyle){
+  if (!node || !lyricsStyle) return;
+  node.classList.add(`line-style-${lyricsStyle}`);
+}
+function renderPair(chords, lyrics, lyricsStyle){
   const wrap = document.createElement('div'); wrap.className = 'pair';
+  applyLyricsStyleClass(wrap, lyricsStyle);
   const ch = document.createElement('div'); ch.className = 'chords'; ch.textContent = chords || ' ';
   const ly = document.createElement('div'); ly.className = 'lyrics'; ly.textContent = lyrics;
   wrap.appendChild(ch); wrap.appendChild(ly); return wrap;
@@ -713,23 +751,25 @@ function renderChordOnly(line, offset, preferFlats){
   const parts = content.split(/\s+/).filter(Boolean).map(c => transposeChord(c, offset, preferFlats));
   const div = document.createElement('div'); div.className = 'chord-row'; div.textContent = parts.join('  '); return div;
 }
-function renderPlainWrapped(text){
+function renderPlainWrapped(text, lyricsStyle){
   const maxCols = getMaxCols();
   const chunks = wrapLyric(text, maxCols);
   const frag = document.createDocumentFragment();
   chunks.forEach(({start,end}) => {
-    const div = document.createElement('div'); div.className = 'plain-row'; div.textContent = text.slice(start,end).trimEnd(); frag.appendChild(div);
+    const div = document.createElement('div'); div.className = 'plain-row';
+    applyLyricsStyleClass(div, lyricsStyle);
+    div.textContent = text.slice(start,end).trimEnd(); frag.appendChild(div);
   });
   return frag;
 }
-function renderLine(line, offset, preferFlats){
+function renderLine(line, offset, preferFlats, lyricsStyle){
   if(!line.trim()){ const div=document.createElement('div'); div.className='empty'; return div; }
   const section = line.match(/^\{section:\s*(.*?)\}$/); if(section){ const div=document.createElement('div'); div.className='section'; div.textContent=section[1]; return div; }
   const comment = line.match(/^\{comment:\s*(.*?)\}$/); if(comment){ const div=document.createElement('div'); div.className='comment'; div.textContent=comment[1]; return div; }
   if(/^\{chords:/.test(line)) return renderChordOnly(line, offset, preferFlats);
   if(!line.includes('[')){
     const box = document.createElement('div');
-    box.appendChild(renderPlainWrapped(line));
+    box.appendChild(renderPlainWrapped(line, lyricsStyle));
     return box;
   }
   const { lyric, placements } = parseBracketLine(line);
@@ -740,7 +780,7 @@ function renderLine(line, offset, preferFlats){
     const lyricChunk = lyric.slice(start,end).trimEnd();
     const width = lyricChunk.length;
     const chordLine = buildChordLine(width, placements, start, end, offset, preferFlats);
-    box.appendChild(renderPair(chordLine, lyricChunk));
+    box.appendChild(renderPair(chordLine, lyricChunk, lyricsStyle));
   });
   return box;
 }
@@ -843,7 +883,15 @@ function render(){
   el.semitones.textContent = off === 0 ? 'Sin transponer' : (off > 0 ? `+${off} semitonos` : `${off} semitonos`);
   renderYouTubeReference(song);
   el.body.innerHTML = '';
-  song.body.split('\n').forEach(line => el.body.appendChild(renderLine(line, state.offset, preferFlats)));
+  let lyricsStyle = '';
+  song.body.split('\n').forEach(line => {
+    const styleDirective = line.match(/^\{lyrics-style:\s*(.*?)\}$/i);
+    if (styleDirective) {
+      lyricsStyle = normalizeLyricsStyleToken(styleDirective[1]);
+      return;
+    }
+    el.body.appendChild(renderLine(line, state.offset, preferFlats, lyricsStyle));
+  });
   save();
 }
 
