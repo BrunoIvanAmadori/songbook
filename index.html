@@ -1,460 +1,691 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-  <title>Cancionero Transpositor</title>
-  <style>
-    :root{
-      --bg:#f6f1e8;
-      --paper:#fffdf8;
-      --ink:#221d18;
-      --muted:#70655b;
-      --line:#ddd0bf;
-      --accent:#6e4522;
-      --accent-soft:#f5e8d8;
-      --chord:#a36808;
-      --font-size:15px;
-      --shadow:0 10px 24px rgba(74,52,28,.10);
-    }
-    *{box-sizing:border-box}
-    html,body{margin:0;padding:0}
-    body{
-      background:var(--bg);
-      color:var(--ink);
-      font-family:system-ui,-apple-system,"Segoe UI",sans-serif;
-      min-height:100vh;
-    }
-    header{
-      position:sticky;top:0;z-index:30;
-      background:rgba(246,241,232,.95);
-      backdrop-filter:blur(10px);
-      border-bottom:1px solid var(--line);
-      padding:10px 12px;
-    }
-    .bar{max-width:760px;margin:0 auto;display:grid;gap:8px}
-    h1{margin:0;font-size:18px;line-height:1.1}
-    .controls{display:grid;grid-template-columns:1fr 1fr;gap:8px}
-    .wide{grid-column:1/-1}
-    label{display:block;margin:0 0 4px;font-size:11px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.06em}
-    select,button{
-      width:100%;min-height:40px;
-      border:1px solid var(--line);
-      border-radius:10px;
-      background:var(--paper);
-      color:var(--ink);
-      padding:9px 10px;
-      font-size:14px;
-    }
-    button{font-weight:700;background:var(--accent-soft);border-color:#d8b992}
-    .stepper{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}
-    main{max-width:760px;margin:0 auto;padding:12px}
-    .sheet{
-      background:var(--paper);
-      border:1px solid var(--line);
-      border-radius:18px;
-      box-shadow:var(--shadow);
-      padding:16px 14px 26px;
-    }
-    .song-head{border-bottom:1px solid var(--line);padding-bottom:10px;margin-bottom:14px}
-    .song-title{margin:0 0 6px;font-size:24px;line-height:1.05;letter-spacing:-.03em}
-    .meta{display:flex;gap:8px;flex-wrap:wrap}
-    .badge{display:inline-flex;align-items:center;padding:4px 9px;border:1px solid var(--line);border-radius:999px;background:#fff8ef;font-size:13px;color:var(--muted)}
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#111111" />
 
-    #songBody{
-      font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,"Liberation Mono",monospace;
-      font-size:var(--font-size);
-      line-height:1.14;
-      letter-spacing:0;
-      font-variant-ligatures:none;
-      text-rendering:optimizeSpeed;
+  <title>Cancionero</title>
+
+  <style>
+    :root {
+      --bg: #111111;
+      --panel: #1b1b1b;
+      --panel-soft: #242424;
+      --text: #f4f4f4;
+      --muted: #a8a8a8;
+      --accent: #1db954;
+      --border: #333333;
+      --warning-bg: #2a220f;
+      --warning-border: #6a541b;
+      --warning-text: #ffd98a;
+      --error: #ff8f8f;
     }
-    .section{
-      margin:18px 0 8px;
-      padding-top:10px;
-      border-top:1px solid var(--line);
-      font-family:system-ui,-apple-system,"Segoe UI",sans-serif;
-      font-size:13px;font-weight:800;color:var(--accent);
-      text-transform:uppercase;letter-spacing:.08em;
+
+    * {
+      box-sizing: border-box;
     }
-    .comment{
-      margin:6px 0 8px;
-      font-family:system-ui,-apple-system,"Segoe UI",sans-serif;
-      font-size:12px;font-style:italic;color:var(--muted);
+
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      line-height: 1.45;
     }
-    .empty{height:10px}
-    .pair{margin:1px 0 5px}
-    .pair .chords,
-    .pair .lyrics,
-    .chord-row,
-    .plain-row{
-      white-space:pre;
-      overflow:hidden;
-      font-family:inherit;
-      max-width:100%;
+
+    header {
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      background: rgba(17, 17, 17, 0.96);
+      backdrop-filter: blur(10px);
+      border-bottom: 1px solid var(--border);
+      padding: 14px 16px;
     }
-    .pair .chords,
-    .chord-row{color:var(--chord);font-weight:800;min-height:1.08em}
-    .pair .lyrics,
-    .plain-row{color:var(--ink)}
-    .footer-actions{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:16px}
-    .note{margin-top:12px;padding:10px 12px;border:1px dashed var(--line);border-radius:12px;background:#fff8ef;color:var(--muted);font-size:12px;line-height:1.35}
-    @media (min-width:700px){
-      .controls{grid-template-columns:2fr 1fr 1fr}
-      .wide{grid-column:auto}
-      .sheet{padding:22px 26px 30px}
-      .song-title{font-size:28px}
-      h1{font-size:20px}
+
+    h1 {
+      margin: 0 0 10px;
+      font-size: 22px;
+      font-weight: 700;
     }
-    @media print{
-      header,.footer-actions,.note{display:none}
-      body{background:white}
-      main{padding:0;max-width:none}
-      .sheet{border:0;box-shadow:none;border-radius:0}
+
+    .top-row {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+    }
+
+    #search {
+      width: 100%;
+      padding: 12px 14px;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      background: var(--panel);
+      color: var(--text);
+      font-size: 16px;
+      outline: none;
+    }
+
+    #refreshButton {
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      background: var(--panel);
+      color: var(--text);
+      padding: 12px 14px;
+      font-size: 14px;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+
+    #refreshButton:hover {
+      background: var(--panel-soft);
+    }
+
+    main {
+      display: grid;
+      grid-template-columns: 320px 1fr;
+      min-height: calc(100vh - 88px);
+    }
+
+    aside {
+      border-right: 1px solid var(--border);
+      background: var(--panel);
+      padding: 12px;
+      overflow-y: auto;
+    }
+
+    .song-button {
+      width: 100%;
+      text-align: left;
+      background: transparent;
+      color: var(--text);
+      border: 1px solid transparent;
+      border-radius: 10px;
+      padding: 12px;
+      margin-bottom: 8px;
+      cursor: pointer;
+    }
+
+    .song-button:hover,
+    .song-button.active {
+      background: var(--panel-soft);
+      border-color: var(--border);
+    }
+
+    .song-title {
+      display: block;
+      font-size: 16px;
+      font-weight: 700;
+      margin-bottom: 2px;
+    }
+
+    .song-artist {
+      display: block;
+      font-size: 13px;
+      color: var(--muted);
+    }
+
+    article {
+      padding: 22px;
+      max-width: 900px;
+      width: 100%;
+      margin: 0 auto;
+    }
+
+    .song-header {
+      margin-bottom: 18px;
+    }
+
+    .song-header h2 {
+      margin: 0 0 4px;
+      font-size: 30px;
+      line-height: 1.1;
+    }
+
+    .song-meta {
+      color: var(--muted);
+      font-size: 15px;
+    }
+
+    .reference-player {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 12px;
+      margin: 18px 0 24px;
+    }
+
+    .reference-label {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 10px;
+      font-size: 14px;
+      color: var(--muted);
+    }
+
+    .reference-label strong {
+      color: var(--text);
+      font-size: 15px;
+    }
+
+    .spotify-link {
+      color: var(--accent);
+      text-decoration: none;
+      font-size: 13px;
+      white-space: nowrap;
+    }
+
+    .spotify-link:hover {
+      text-decoration: underline;
+    }
+
+    .spotify-frame {
+      width: 100%;
+      height: 152px;
+      border: 0;
+      border-radius: 12px;
+      display: block;
+    }
+
+    .song-sheet {
+      font-family: "Courier New", Courier, monospace;
+      font-size: 16px;
+      white-space: pre-wrap;
+      background: #0d0d0d;
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 18px;
+      overflow-x: auto;
+    }
+
+    .state-message,
+    .notice {
+      color: var(--muted);
+      font-size: 16px;
+      padding: 32px 0;
+    }
+
+    .state-message.error {
+      color: var(--error);
+    }
+
+    .cache-notice {
+      background: var(--warning-bg);
+      border: 1px solid var(--warning-border);
+      color: var(--warning-text);
+      border-radius: 10px;
+      padding: 10px 12px;
+      margin-bottom: 16px;
+      font-size: 14px;
+    }
+
+    .spotify-offline-note {
+      color: var(--muted);
+      font-size: 14px;
+      margin: 0;
+    }
+
+    @media (max-width: 760px) {
+      main {
+        display: block;
+      }
+
+      aside {
+        border-right: 0;
+        border-bottom: 1px solid var(--border);
+        max-height: 260px;
+      }
+
+      article {
+        padding: 16px;
+      }
+
+      .song-header h2 {
+        font-size: 24px;
+      }
+
+      .song-sheet {
+        font-size: 14px;
+        padding: 14px;
+      }
+
+      .spotify-frame {
+        height: 152px;
+      }
+
+      .top-row {
+        align-items: stretch;
+      }
+
+      #refreshButton {
+        padding: 12px;
+      }
     }
   </style>
 </head>
+
 <body>
   <header>
-    <div class="bar">
-      <h1>Cancionero transpositor</h1>
-      <div class="controls">
-        <div class="wide">
-          <label for="songSelect">Canción</label>
-          <select id="songSelect"></select>
-        </div>
-        <div>
-          <label for="keySelect">Tono</label>
-          <select id="keySelect"></select>
-        </div>
-        <div>
-          <label>Transponer</label>
-          <div class="stepper">
-            <button id="downBtn" type="button">−1</button>
-            <button id="resetBtn" type="button">0</button>
-            <button id="upBtn" type="button">+1</button>
-          </div>
-        </div>
-      </div>
+    <h1>Cancionero</h1>
+    <div class="top-row">
+      <input id="search" type="search" placeholder="Buscar canción o artista..." />
+      <button id="refreshButton" type="button">Actualizar</button>
     </div>
   </header>
 
   <main>
-    <article class="sheet" id="sheet">
-      <div class="song-head">
-        <h2 class="song-title" id="songTitle"></h2>
-        <div class="meta">
-          <span class="badge" id="originalKey"></span>
-          <span class="badge" id="currentKey"></span>
-          <span class="badge" id="semitones"></span>
-        </div>
-      </div>
-      <div id="songBody"></div>
-      <div class="footer-actions">
-        <button id="fontDown" type="button">Letra −</button>
-        <button id="fontUp" type="button">Letra +</button>
-      </div>
-      <div class="note">Cargando canciones desde Google Sheet central... Si la hoja todavía no está publicada, se usa una copia local de respaldo.</div>
+    <aside id="songList"></aside>
+
+    <article id="songView">
+      <div class="state-message">Cargando canciones...</div>
     </article>
   </main>
 
-<script>
-const SHARP = ['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'];
-const FLAT  = ['C','Db','D','Eb','E','F','Gb','G','Ab','A','Bb','B'];
-const NOTE_TO_INDEX = {
-  'C':0,'B#':0,'C#':1,'Db':1,'D':2,'D#':3,'Eb':3,'E':4,'Fb':4,
-  'E#':5,'F':5,'F#':6,'Gb':6,'G':7,'G#':8,'Ab':8,'A':9,'A#':10,'Bb':10,'B':11,'Cb':11
-};
-const MAJOR_KEYS = SHARP.concat(FLAT.filter(k => !SHARP.includes(k)));
-const MINOR_KEYS = MAJOR_KEYS.map(k => k + 'm');
+  <script>
+    const SHEET_ID = "PEGAR_ID_DEL_GOOGLE_SHEET";
+    const SHEET_NAME = "Canciones";
+    const CACHE_KEY = "cancionero_songs_cache_v1";
 
-function parseKey(key){ const m = key.match(/^([A-G](?:#|b)?)(m?)$/); return {root:m?m[1]:'C', minor:!!(m&&m[2])}; }
-function keyIndex(key){ return NOTE_TO_INDEX[parseKey(key).root]; }
-function transposeRoot(root, offset, preferFlats){
-  const idx = NOTE_TO_INDEX[root]; if(idx === undefined) return root;
-  const scale = preferFlats ? FLAT : SHARP;
-  return scale[(idx + offset + 1200) % 12];
-}
-function transposeChord(chord, offset, preferFlats){
-  if(!chord || !chord.trim()) return chord;
-  return chord.replace(/([A-G](?:#|b)?)/g, (m, root) => transposeRoot(root, offset, preferFlats));
-}
-function normalizeOffset(n){ let v=((n%12)+12)%12; if(v>6) v-=12; return v; }
-function targetKeyName(song, offset, preferFlats){ const pk=parseKey(song.key); return transposeRoot(pk.root, offset, preferFlats)+(pk.minor?'m':''); }
+    const sheetUrl = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&sheet=${encodeURIComponent(SHEET_NAME)}`;
 
-const SHEET_ID = '1ODcMNnguu-pHW6BK7zbOGSMRYkgwQiDac5YPsjS7Smc';
-const SHEET_NAME = 'Songs';
-let songs = [
-  {
-    "id": "la-oma",
-    "title": "La Oma",
-    "key": "Gm",
-    "body": "{section: Verso 1}\n[Gm]La Oma es una [D7]mujer, de setenta y pico de [Gm]años\nVive en el monte [Eb]chaqueño, [D7]cerquita de San Ber[Gm]nardo\nTiene los ojos a[G7]zules, como el [Cm]agua de los [F]mares, [Bb]\nEs que vino de muy [A7]lejos, y el [Cm]cielo quedó en su [D7]sangre...\n\n{section: Estribillo}\n{comment: sin canto}\n[D7]Hay que entrar por las picadas, para llegar a su [Gm]rancho\nDe barro y apunta[D7]lao, con quebracho colo[Gm]rado\nLleno de árboles el [G7]patio y herra[Cm]mientas de tra[F]bajo, [Bb]\n[(Gm)(F)(Eb)]Una volanta un a[D7]rao y el paisaje de su [Gm]Chaco,\n{comment: sin canto}\n[(Eb)] [D7]La Oma es feliz con poco, digamos que es mejor, con [Gm]nada ]\nLa Oma era [Eb]rubia y se [D7]ve, que era una linda ale[Gm]mana. ] BIS\n\n{section: Verso 2}\n[Gm]Qué sola que está la [D7]Oma, pero ella no piensa en [Gm]nada\nComo pensar en la [Eb]muerte, [D7]si la Oma es como un [Gm]hada,\nEn su ranchito de [G7]barro, ca[Cm]lienta a leña su [F]pava, [Bb]\nConversa con un lo[A7]rito, es con el [Cm]único que [D7]habla.\n\n{section: Estribillo}\n\n{section: Final}\n[Gm]La Oma es una [D7]mujer...\n[D7]de setenta y pico de [Cm/Gm]aaa[Eb]ños [Cm] [Gm] --- [(D7)] [(Gm)]"
-  },
-  {
-    "id": "eterno-amor",
-    "title": "Eterno Amor",
-    "key": "A",
-    "body": "{section: Intro}\n{chords: A D A E}\n{chords: D A E D A}\n\n{section: Primera parte}\n[A]Despierta ya mujer así yo puedo [E]ver\nLa mirada de tu [F#m]alma tan pro[C#m]funda\nQue me hace tanto [D]bien y [A]sueño\nQue entre tus [B7]brazos\nTu boca me diga te [E]quiero\n[D]Ooooooo[E]oh\n\n{section: Segunda parte}\n[A]Siente mi corazón y el fuego de su [E]amor\nNo lo dejes así [F#m]muerto de [C#m]frío\nTu mirada es todo mi [D]abrigo [A]\nTiene la gracia de [B7]hacerme\nQue me sienta [E]vivo\n[D]Oooo[E]oooh [A]\n\n{section: Estribillo}\n[A]Si supieras de verdad\nQue tú eres mi eterno [D]amor\nY que toda esta dis[E]tancia me mar[D]chita\nComo una [A]flor [E]\n\n[A]Si supieras de verdad\nCuánto es que te quiero [D]yo\nY que toda esta dis[E]tancia se me a[D]honda\nEl cora[A]zón [E]\n\n{section: Interludio}\n{chords: A D A E}\n{chords: D A E D A}\n\n{section: Primera parte}\n[A]Despierta ya mujer así yo puedo [E]ver\nLa mirada de tu [F#m]alma tan pro[C#m]funda\nQue me hace tanto [D]bien y [A]sueño\nQue entre tus [B7]brazos\nTu boca me diga te [E]quiero\n[D]Ooooooo[E]oh\n\n{section: Segunda parte}\n[A]Siente mi corazón y el fuego de su [E]amor\nNo lo dejes así [F#m]muerto de [C#m]frío\nTu mirada es todo mi [D]abrigo [A]\nTiene la gracia de [B7]hacerme\nQue me sienta [E]vivo\n[D]Oooo[E]oooh [A]\n\n{section: Estribillo final}\n[A]Si supieras de verdad\nQue tú eres mi eterno [D]amor\nY que toda esta dis[E]tancia me mar[D]chita\nComo una [A]flor [E]\n\n[A]Si supieras de verdad\nCuánto es que te quiero [D]yo\nY que toda esta dis[E]tancia se me a[D]honda\nEl cora[A]zón\n[D]Ooooooo[A]oh [D] [A]"
-  },
-  {
-    "id": "entra-a-mi-hogar",
-    "title": "Entra a mi Hogar",
-    "key": "Am",
-    "body": "{section: Verso}\n[C]Abre la puerta y [E7]entra a mi [Am]hogar\nAmigo mío que hay un [F]lugar\nDeja un [D7]momento de caminar [G]\n[C]Siéntate un rato a [E7]descansar [Am]\nToma mi vino y come mi [F]pan\nTenemos [D7]tiempo de conversar [G]\n\n[E7]Que hay alegría en [Am]mi corazón [E7] [Am]\nCon tu presencia me traes el [C]sol\nManos sencillas, [G7]manos de [C]amor\nTienden la mesa y le dan ca[Am]lor\nAl pan ca[Dm]liente sobre el mantel\nEl vino bueno y un gusto a [G]miel\nHabrá en mi casa mientras es[C]tés [G]\n\n{section: Estribillo}\n[C]Qué felicidad [G]amigo [C]mío\nTenerte con[C7]migo y recor[F]dar\nHacer que florezcan pecho a[C]dentro\nArdiente ca[G7]pullos de amis[C]tad\n\n[C]Toma mi gui[G]tarra y dulce[C]mente\nCántame con [C7]ella una can[F]ción\nQue quiero guardar en mi me[C]moria\nEl grato re[G7]cuerdo de tu [C]voz"
-  },
-  {
-    "id": "sombra-del-ayer",
-    "title": "Sombra del Ayer",
-    "key": "E",
-    "body": "{section: Intro}\n{chords: E E/B E E/B}\n\n{section: Primera parte}\n[E]Vuelve a despertar la lluvia en [C#m]mí\nDerramando toda su ra[G#m]íz\nSobre el pa[A]pel\n\n[E]Vuelven a caer sobre la piel\nDel que va espe[C#m]rando por na[G#m]cer\nEstás a[A]quí\n\n{section: Pre-estribillo}\nMientras tanto [F#m]busco las pala[B]bras\nQue me cubran esta he[G#m]rida\nQue me alejen más de [C#m]ti\n\nY la sole[F#m]dad me va cre[B]ciendo\nCon la niebla de este in[G#m]vierno\nQue no puedo resis[C#m]tir\nLa [A]noche sin [Am]ti\n\n{section: Segunda parte}\n[E]La mañana se levanta ya\nNo hay señales de que vol[C#m]verás [G#m]\nNo estás a[A]quí\n\n[E]Solamente quiero comprender\nQue tu ausencia vive en [C#m]mi pared [G#m]\nY sin que[A]rer\n\n{section: Pre-estribillo}\nCómo dete[F#m]ner este va[B]cío\nQue me crece desde a[G#m]dentro\nQue no me deja se[C#m]guir\n\nCómo asimi[F#m]lar todos los hue[B]cos\nQue aparecen en mi [G#m]cama\nY se quedarán a[C#m]hí\nSe a[A]paga la [Am]luz\n\n{section: Estribillo}\n[E]Y me siento solo con mi voz\nNo descubro [C#m]cómo suce[G#m]dió\nPerder tu a[A]mor\n\n[E]Todo lo que nunca más veré\nCómo se me [C#m]anuda el cora[G#m]zón\nCómo vol[A]ver\n\nSi tu[F#m]viera la [A/E]oportuni[B]dad\nEn aquel minuto repa[G#m]rar\nDe no ca[C#m]er\n\nSi que[F#m]daran rastros [A/E]a se[B]guir\nUna huella tenue de ese a[G#m]bril\nPerdién[C#m]dose\nEn la [A]sombra del a[Am]yer\n\n{section: Solo}\n{chords: E A B E}\n{chords: C#m A B E B}\n\n{section: Estribillo}\n[E]Y me siento solo con mi voz\nNo descubro [C#m]cómo suce[G#m]dió\nPerder tu a[A]mor\n\n[E]Todo lo que nunca más veré\nCómo se me [C#m]anuda el cora[G#m]zón\nCómo vol[A]ver\n\nSi tu[F#m]viera la [A/E]oportuni[B]dad\nEn aquel minuto repa[G#m]rar\nDe no ca[C#m]er\n\nSi que[F#m]daran rastros [A/E]a se[B]guir\nUna huella tenue de ese a[G#m]bril\nPerdién[C#m]dose\nEn la [A]sombra del a[Am]yer\n\n{section: Final}\n{chords: E A C#m B A E}"
-  },
-  {
-    "id": "al-jardin",
-    "title": "Al Jardín de la República",
-    "key": "G#m",
-    "body": "{section: Verso 1}\nDesde el [B]norte traigo en el [F#7]alma [B]\nLa alegre [F#7]zamba que [B]canto a[F#7]quí [B]\nY que [D#7]bailan los tucu[G#m]manos\nCon entu[D#7]siasmo propio de a[G#m]llí [F#]\n[E]Cada [D#7]cual sigue a su pa[G#m]reja,\nJoven o [D#7]vieja, de todo [G#m]vi.\n\n{section: Verso 2}\nMedia [B]vuelta y la compa[F#7]ñera [B]\nForma una [F#7]rueda para [B]prose[F#7]guir [B]\nViene el [D#7]gaucho, le hace un flo[G#m]reo\nY un zapa[D#7]teo comienza a[G#m]llí [F#]\n[E]Sigue el [D#7]gaucho con su flo[G#m]reo\nY el zapa[D#7]teo termina a[G#m]llí.\n\n{section: Estribillo}\nPa' las del [G#7]norte [C#m]sí,\nPara las [F#7]otras [B]no,\nPara las [D#7]Tucu[G#m]manas,\nMujer ga[D#7]lana, naranjo en [G#m]flor [F#] [E]\n[D#7]Todo lo que ellas [G#m]quieran\nQue la pri[D#7]mera ya termi[G#m]nó.\n\n{section: Verso 3}\nNo me ol[B]vido, viera, com[F#7]padre, [B]\nDe aquellos [F#7]bailes que [B]hacen a[F#7]llí [B]\nTucu[D#7]manos y tucu[G#m]manas,\nTodos se a[D#7]fanan por diver[G#m]tir [F#]\n[E]Y hacer [D#7]linda esta triste [G#m]vida,\nAsí se ol[D#7]vida que hay que mo[G#m]rir.\n\n{section: Verso 4}\nEmpa[B]nadas y vino en [F#7]jarra [B]\nUna gui[F#7]tarra, bombo y vio[B]lín [F#7] [B]\nY unas [D#7]cuantas mozas bi[G#m]zarras\nPa' que la [D#7]farra pueda se[G#m]guir [F#]\n[E]Sin que [D#7]falten esos co[G#m]leros,\nViejos cuen[D#7]teros, pa' que hagan re[G#m]ír.\n\n{section: Estribillo final}\nPara las [G#7]otras [C#m]no,\nPa' las del [F#7]norte [B]sí,\nPara las [D#7]de Si[G#m]moca,\nMis ansias [D#7]locas de estar a[G#m]llí [F#] [E]\n[D#7]Para brindarles mi [G#m]alma\nEn esta [D#7]zamba que canto a[G#m]quí."
-  },
-  {
-    "id": "el-olvidao",
-    "title": "El Olvidao",
-    "key": "Am",
-    "body": "{section: Verso 1}\n[Am]De tu palo soy [Dm]hijo de tu [E7]cuero [Am]\nSoy el olvidao en la [F]alcancía del [B7]tiempo [E7]\nEl que se que[Dm]dó de [C]pie ponién[E7]dole el [Am]pecho\n\n{section: Verso 2}\n[Am]Flor obrera soy [Dm]silvestre de [E7]espuma [Am]\nCuando el tren se va miro en las [F]vías la [B7]luna [E7]\nPensando tal [Dm]vez mi [C]pueblo encuen[E7]tre for[Am]tuna\n\n{section: Verso 3}\n[Am]Mi bofe se hin[Dm]chó cuando repar[E7]tieron [Am]\nDe mí no se acuerdan dicen que [F]nunca me [B7]vieron [E7]\nQue no soy de [Dm]aquí, que ya [C]no tengo re[E7]medio [Am]\n\n{section: Estribillo}\n[Am]Soy el olvidao [Dm]el mismo que un [E7]día [Am]\nSe puso de pie tragando [F]tierra y sa[G]liva [C]\nCamino hacia el [Dm]sol para cu[Am]rar las he[E7]ridas [Am]\n\n{section: Verso 4}\n[Am]Una herida soy [Dm]buscando el sa[E7]lario [Am]\nMaestro de pie cuidando [F]pichones [B7]blancos [E7]\nQue madu[Dm]rarán ilumi[C]nando tu [E7]pago [Am]\n\n{section: Verso 5}\n[Am]Soy el que quedó [Dm]en medio los [E7]ranchos [Am]\nGuacho del fiao a mate y [F]guiso inven[B7]tado [E7]\nHambre y rebe[Dm]lión fueron cre[Am]ciendo en mis [E7]brazos [Am]\n\n{section: Verso 6}\n[Am]No quiero de más [Dm]quiero lo que es [E7]mío [Am]\nAl mazo tram[F]piao voy a tor[Dm]cerle el des[B7]tino [E7]\nLevan[Dm]tate cagón que aquí [Am]canta un argen[E7]tino! [Am]\n\n{section: Estribillo}\n[Am]Soy el olvidao [Dm]el mismo que un [E7]día [Am]\nSe puso de pie tragando [F]tierra y sa[G]liva [C]\nCamino hacia el [Dm]sol para cu[Am]rar las he[E7]ridas [Am]"
-  }
-];
+    let songs = [];
+    let activeSongIndex = 0;
+    let currentDataSource = "fresh";
+    let cachedAt = "";
 
-function loadSongsFromGoogleSheet() {
-  return new Promise((resolve, reject) => {
-    const cb = '__cancionero_cb_' + Date.now() + '_' + Math.floor(Math.random()*100000);
-    const src = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?sheet=${encodeURIComponent(SHEET_NAME)}&tqx=out:json;responseHandler:${cb}`;
-    const script = document.createElement('script');
-    let done = false;
-    const timer = setTimeout(() => {
-      if (done) return;
-      done = true;
-      cleanup();
-      reject(new Error('No se pudo leer la Google Sheet. Publicala o compartila como visible para lectura.'));
-    }, 7000);
-    function cleanup() {
-      clearTimeout(timer);
-      try { delete window[cb]; } catch(e) { window[cb] = undefined; }
-      script.remove();
+    const songListEl = document.getElementById("songList");
+    const songViewEl = document.getElementById("songView");
+    const searchEl = document.getElementById("search");
+    const refreshButtonEl = document.getElementById("refreshButton");
+
+    init();
+    registerServiceWorker();
+
+    async function init() {
+      const cachedPayload = loadSongsFromCache();
+
+      if (cachedPayload.songs.length) {
+        songs = cachedPayload.songs;
+        cachedAt = cachedPayload.savedAt;
+        currentDataSource = "cache-syncing";
+        renderSongList(getFilteredSongs());
+        renderSong(0);
+      } else {
+        renderState("Cargando canciones...");
+      }
+
+      await refreshSongs({ silentWhenCacheExists: Boolean(cachedPayload.songs.length) });
     }
-    window[cb] = (res) => {
-      if (done) return;
-      done = true;
-      cleanup();
-      try { resolve(parseGvizSongs(res)); }
-      catch(e) { reject(e); }
-    };
-    script.onerror = () => {
-      if (done) return;
-      done = true;
-      cleanup();
-      reject(new Error('Error cargando la fuente de canciones.'));
-    };
-    script.src = src;
-    document.head.appendChild(script);
-  });
-}
 
-function parseGvizSongs(res) {
-  if (!res || !res.table || !res.table.cols || !res.table.rows) return [];
-  const headers = res.table.cols.map((c, i) => String(c.label || c.id || ('col'+i)).trim().toLowerCase());
-  const index = name => headers.indexOf(name);
-  const idx = { id:index('id'), title:index('title'), key:index('key'), body:index('body'), visible:index('visible'), notes:index('notes') };
-  if (idx.title < 0 || idx.key < 0 || idx.body < 0) return [];
-  return res.table.rows.map((r, n) => {
-    const cells = r.c || [];
-    const get = i => i >= 0 && cells[i] ? (cells[i].v ?? '') : '';
-    const title = String(get(idx.title)).trim();
-    const key = String(get(idx.key)).trim();
-    const body = String(get(idx.body)).replace(/\r\n/g, '\n').trim();
-    const visible = String(get(idx.visible) || 'TRUE').toUpperCase();
-    if (!title || !key || !body || visible === 'FALSE' || visible === 'NO' || visible === '0') return null;
-    let id = String(get(idx.id) || title).trim().toLowerCase()
-      .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
-      .replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
-    if (!id) id = 'song-' + (n+1);
-    return { id, title, key, body };
-  }).filter(Boolean);
-}
+    async function refreshSongs(options = {}) {
+      const { silentWhenCacheExists = false } = options;
 
-function setSourceStatus(message, ok) {
-  const note = document.querySelector('.note');
-  if (!note) return;
-  note.innerHTML = message;
-  note.style.borderColor = ok ? '#b7d7b7' : '#ddd0bf';
-}
+      try {
+        if (!silentWhenCacheExists) {
+          renderState("Actualizando canciones...");
+        }
 
-const state = {
-  songId: localStorage.getItem('songId.v2') || songs[0].id,
-  offset: Number(localStorage.getItem('offset.v2') || 0),
-  fontSize: Number(localStorage.getItem('fontSize.v2') || 15)
-};
-const el = {
-  songSelect: document.getElementById('songSelect'),
-  keySelect: document.getElementById('keySelect'),
-  songTitle: document.getElementById('songTitle'),
-  originalKey: document.getElementById('originalKey'),
-  currentKey: document.getElementById('currentKey'),
-  semitones: document.getElementById('semitones'),
-  body: document.getElementById('songBody'),
-  sheet: document.getElementById('sheet')
-};
-function currentSong(){ return songs.find(s=>s.id===state.songId) || songs[0]; }
-function save(){
-  localStorage.setItem('songId.v2', state.songId);
-  localStorage.setItem('offset.v2', String(state.offset));
-  localStorage.setItem('fontSize.v2', String(state.fontSize));
-}
-function populateSongs(){
-  el.songSelect.innerHTML = songs.map(s => `<option value="${s.id}">${s.title} (${s.key})</option>`).join('');
-  el.songSelect.value = state.songId;
-}
-function populateKeys(){
-  const song = currentSong();
-  const pk = parseKey(song.key);
-  const keys = pk.minor ? MINOR_KEYS : MAJOR_KEYS;
-  const current = targetKeyName(song, state.offset, song.key.includes('b'));
-  el.keySelect.innerHTML = keys.map(k => `<option value="${k}">${k}</option>`).join('');
-  if(keys.includes(current)) el.keySelect.value = current;
-}
-function getMaxCols(){
-  const sheetWidth = el.sheet.clientWidth - 28;
-  const charWidth = state.fontSize * 0.61;
-  return Math.max(26, Math.min(48, Math.floor(sheetWidth / charWidth)));
-}
-function parseBracketLine(line){
-  const regex = /\[([^\]]+)\]/g;
-  let lyric = '';
-  let placements = [];
-  let lastIndex = 0;
-  let m;
-  while((m = regex.exec(line))){
-    lyric += line.slice(lastIndex, m.index);
-    placements.push({ pos: lyric.length, chord: m[1] });
-    lastIndex = regex.lastIndex;
-  }
-  lyric += line.slice(lastIndex);
-  return { lyric, placements };
-}
-function wrapLyric(lyric, maxCols){
-  if(lyric.length <= maxCols) return [{start:0,end:lyric.length}];
-  const chunks=[];
-  let start=0;
-  while(start < lyric.length){
-    if(lyric.length - start <= maxCols){
-      chunks.push({start,end:lyric.length});
-      break;
+        const freshSongs = await loadSongsFromGoogleSheets();
+
+        if (!freshSongs.length) {
+          if (!songs.length) {
+            renderState("No hay canciones cargadas en la hoja.");
+          }
+          return;
+        }
+
+        songs = freshSongs;
+        cachedAt = new Date().toISOString();
+        currentDataSource = "fresh";
+        activeSongIndex = Math.min(activeSongIndex, songs.length - 1);
+
+        saveSongsToCache(songs, cachedAt);
+        renderSongList(getFilteredSongs());
+        renderSong(activeSongIndex);
+      } catch (error) {
+        console.error(error);
+
+        const cachedPayload = loadSongsFromCache();
+
+        if (cachedPayload.songs.length) {
+          songs = cachedPayload.songs;
+          cachedAt = cachedPayload.savedAt;
+          currentDataSource = "cache-offline";
+          activeSongIndex = Math.min(activeSongIndex, songs.length - 1);
+          renderSongList(getFilteredSongs());
+          renderSong(activeSongIndex);
+          return;
+        }
+
+        renderState(
+          "No se pudieron cargar las canciones desde Google Sheets y no hay una copia offline guardada. Abrí el Cancionero una vez con conexión para crear la cache local.",
+          true
+        );
+      }
     }
-    let end = start + maxCols;
-    let breakAt = lyric.lastIndexOf(' ', end);
-    if(breakAt <= start + 8){
-      breakAt = lyric.indexOf(' ', end);
-      if(breakAt === -1) breakAt = Math.min(lyric.length, end);
-    }
-    chunks.push({start, end: breakAt});
-    start = breakAt;
-    while(start < lyric.length && lyric[start] === ' ') start++;
-  }
-  return chunks;
-}
-function buildChordLine(width, placements, start, end, offset, preferFlats){
-  const arr = Array(width).fill(' ');
-  placements.forEach(p => {
-    if(p.pos < start || p.pos >= end) return;
-    const chord = transposeChord(p.chord, offset, preferFlats);
-    const local = p.pos - start;
-    for(let i=0;i<chord.length && local+i < arr.length;i++) arr[local+i] = chord[i];
-  });
-  return arr.join('').replace(/\s+$/,'');
-}
-function renderPair(chords, lyrics){
-  const wrap = document.createElement('div'); wrap.className = 'pair';
-  const ch = document.createElement('div'); ch.className = 'chords'; ch.textContent = chords || ' ';
-  const ly = document.createElement('div'); ly.className = 'lyrics'; ly.textContent = lyrics;
-  wrap.appendChild(ch); wrap.appendChild(ly); return wrap;
-}
-function renderChordOnly(line, offset, preferFlats){
-  const content = line.replace(/^\{chords:\s*|\}$/g,'').trim();
-  const parts = content.split(/\s+/).filter(Boolean).map(c => transposeChord(c, offset, preferFlats));
-  const div = document.createElement('div'); div.className = 'chord-row'; div.textContent = parts.join('  '); return div;
-}
-function renderPlainWrapped(text){
-  const maxCols = getMaxCols();
-  const chunks = wrapLyric(text, maxCols);
-  const frag = document.createDocumentFragment();
-  chunks.forEach(({start,end}) => {
-    const div = document.createElement('div'); div.className = 'plain-row'; div.textContent = text.slice(start,end).trimEnd(); frag.appendChild(div);
-  });
-  return frag;
-}
-function renderLine(line, offset, preferFlats){
-  if(!line.trim()){ const div=document.createElement('div'); div.className='empty'; return div; }
-  const section = line.match(/^\{section:\s*(.*?)\}$/); if(section){ const div=document.createElement('div'); div.className='section'; div.textContent=section[1]; return div; }
-  const comment = line.match(/^\{comment:\s*(.*?)\}$/); if(comment){ const div=document.createElement('div'); div.className='comment'; div.textContent=comment[1]; return div; }
-  if(/^\{chords:/.test(line)) return renderChordOnly(line, offset, preferFlats);
-  if(!line.includes('[')){
-    const box = document.createElement('div');
-    box.appendChild(renderPlainWrapped(line));
-    return box;
-  }
-  const { lyric, placements } = parseBracketLine(line);
-  const maxCols = getMaxCols();
-  const chunks = wrapLyric(lyric, maxCols);
-  const box = document.createElement('div');
-  chunks.forEach(({start,end}) => {
-    const lyricChunk = lyric.slice(start,end).trimEnd();
-    const width = lyricChunk.length;
-    const chordLine = buildChordLine(width, placements, start, end, offset, preferFlats);
-    box.appendChild(renderPair(chordLine, lyricChunk));
-  });
-  return box;
-}
-function render(){
-  const song = currentSong();
-  const preferFlats = song.key.includes('b') || targetKeyName(song, state.offset, false).includes('b');
-  const currentKey = targetKeyName(song, state.offset, preferFlats);
-  document.documentElement.style.setProperty('--font-size', state.fontSize + 'px');
-  populateKeys();
-  el.songSelect.value = song.id;
-  el.songTitle.textContent = song.title;
-  el.originalKey.textContent = 'Original: ' + song.key;
-  el.currentKey.textContent = 'Actual: ' + currentKey;
-  const off = normalizeOffset(state.offset);
-  el.semitones.textContent = off === 0 ? 'Sin transponer' : (off > 0 ? `+${off} semitonos` : `${off} semitonos`);
-  el.body.innerHTML = '';
-  song.body.split('\n').forEach(line => el.body.appendChild(renderLine(line, state.offset, preferFlats)));
-  save();
-}
 
-populateSongs();
-render();
-loadSongsFromGoogleSheet()
-  .then(remoteSongs => {
-    if (remoteSongs && remoteSongs.length) {
-      songs = remoteSongs;
-      if (!songs.find(s => s.id === state.songId)) { state.songId = songs[0].id; state.offset = 0; }
-      populateSongs();
-      render();
-      setSourceStatus('Fuente: Google Sheet central cargada correctamente. Cuando agreguemos nuevas canciones a la hoja, aparecerán acá al recargar.', true);
-    } else {
-      setSourceStatus('No encontré canciones válidas en la Google Sheet. Estoy usando la copia local incluida en este archivo.', false);
+    async function loadSongsFromGoogleSheets() {
+      const response = await fetch(sheetUrl, { cache: "no-store" });
+
+      if (!response.ok) {
+        throw new Error(`Google Sheets respondió con estado ${response.status}`);
+      }
+
+      const csvText = await response.text();
+      const rows = parseCsv(csvText);
+
+      if (rows.length < 2) {
+        return [];
+      }
+
+      const headers = rows[0].map(normalizeHeader);
+
+      return rows
+        .slice(1)
+        .map((row) => rowToSong(headers, row))
+        .filter((song) => song.title && song.lyrics);
     }
-  })
-  .catch(err => {
-    console.warn(err);
-    setSourceStatus('No pude leer la Google Sheet central todavía. Estoy usando la copia local incluida. Para activar la base central: en Google Sheets, Archivo → Compartir → Publicar en la web, pestaña Songs.', false);
-  });
-window.addEventListener('resize', render);
-el.songSelect.addEventListener('change', e => { state.songId = e.target.value; state.offset = 0; render(); });
-el.keySelect.addEventListener('change', e => { const song=currentSong(); state.offset = keyIndex(e.target.value) - keyIndex(song.key); render(); });
-document.getElementById('downBtn').addEventListener('click', ()=>{ state.offset -= 1; render(); });
-document.getElementById('upBtn').addEventListener('click', ()=>{ state.offset += 1; render(); });
-document.getElementById('resetBtn').addEventListener('click', ()=>{ state.offset = 0; render(); });
-document.getElementById('fontDown').addEventListener('click', ()=>{ state.fontSize = Math.max(12, state.fontSize - 1); render(); });
-document.getElementById('fontUp').addEventListener('click', ()=>{ state.fontSize = Math.min(24, state.fontSize + 1); render(); });
-</script>
+
+    function rowToSong(headers, row) {
+      const data = {};
+
+      headers.forEach((header, index) => {
+        data[header] = row[index] ? row[index].trim() : "";
+      });
+
+      return {
+        title: data.title || data.titulo || data.cancion || "",
+        artist: data.artist || data.artista || "",
+        key: data.key || data.tono || "",
+        spotifyUrl: data.spotifyurl || data.spotify || data.spotifylink || "",
+        lyrics: data.lyrics || data.letra || data.acordes || ""
+      };
+    }
+
+    function normalizeHeader(header) {
+      return String(header || "")
+        .trim()
+        .toLowerCase()
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .replace(/\s+/g, "")
+        .replace(/_/g, "");
+    }
+
+    function saveSongsToCache(songsToSave, savedAt) {
+      const payload = {
+        savedAt,
+        songs: songsToSave
+      };
+
+      localStorage.setItem(CACHE_KEY, JSON.stringify(payload));
+    }
+
+    function loadSongsFromCache() {
+      try {
+        const rawPayload = localStorage.getItem(CACHE_KEY);
+
+        if (!rawPayload) {
+          return { savedAt: "", songs: [] };
+        }
+
+        const payload = JSON.parse(rawPayload);
+
+        if (!payload || !Array.isArray(payload.songs)) {
+          return { savedAt: "", songs: [] };
+        }
+
+        return {
+          savedAt: payload.savedAt || "",
+          songs: payload.songs
+        };
+      } catch (error) {
+        console.warn("No se pudo leer la cache local:", error);
+        return { savedAt: "", songs: [] };
+      }
+    }
+
+    function renderSongList(list) {
+      songListEl.innerHTML = "";
+
+      if (!list.length) {
+        songListEl.innerHTML = `<div class="notice">No hay canciones que coincidan con la búsqueda.</div>`;
+        return;
+      }
+
+      list.forEach((song) => {
+        const index = songs.indexOf(song);
+        const button = document.createElement("button");
+        button.className = "song-button";
+        button.type = "button";
+
+        if (index === activeSongIndex) {
+          button.classList.add("active");
+        }
+
+        button.innerHTML = `
+          <span class="song-title">${escapeHtml(song.title)}</span>
+          <span class="song-artist">${escapeHtml(song.artist || "Sin artista")}</span>
+        `;
+
+        button.addEventListener("click", () => {
+          activeSongIndex = index;
+          renderSong(activeSongIndex);
+          renderSongList(getFilteredSongs());
+        });
+
+        songListEl.appendChild(button);
+      });
+    }
+
+    function renderSong(index) {
+      const song = songs[index];
+
+      if (!song) {
+        renderState("Canción no encontrada.");
+        return;
+      }
+
+      const spotifyEmbedUrl = getSpotifyEmbedUrl(song.spotifyUrl);
+      const cacheNotice = getCacheNoticeHtml();
+      const shouldRenderSpotifyIframe = spotifyEmbedUrl && currentDataSource !== "cache-offline";
+
+      songViewEl.innerHTML = `
+        ${cacheNotice}
+
+        <section class="song-header">
+          <h2>${escapeHtml(song.title)}</h2>
+          <div class="song-meta">
+            ${escapeHtml(song.artist || "Sin artista")}
+            ${song.key ? ` · Tono: ${escapeHtml(song.key)}` : ""}
+          </div>
+        </section>
+
+        ${spotifyEmbedUrl ? `
+          <section class="reference-player">
+            <div class="reference-label">
+              <strong>Referencia</strong>
+              <a class="spotify-link" href="${escapeAttribute(song.spotifyUrl)}" target="_blank" rel="noopener noreferrer">
+                Abrir en Spotify
+              </a>
+            </div>
+
+            ${shouldRenderSpotifyIframe ? `
+              <iframe
+                class="spotify-frame"
+                src="${escapeAttribute(spotifyEmbedUrl)}"
+                allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
+                loading="lazy">
+              </iframe>
+            ` : `
+              <p class="spotify-offline-note">El reproductor de Spotify requiere conexión.</p>
+            `}
+          </section>
+        ` : ""}
+
+        <pre class="song-sheet">${escapeHtml(song.lyrics)}</pre>
+      `;
+    }
+
+    function getCacheNoticeHtml() {
+      if (currentDataSource === "fresh") {
+        return "";
+      }
+
+      const cachedAtText = cachedAt ? ` Última sincronización: ${formatDate(cachedAt)}.` : "";
+
+      if (currentDataSource === "cache-syncing") {
+        return `<div class="cache-notice">Mostrando copia local mientras se sincroniza con Google Sheets.${cachedAtText}</div>`;
+      }
+
+      return `<div class="cache-notice">Sin conexión o Google Sheets no disponible. Estás viendo la última copia guardada.${cachedAtText}</div>`;
+    }
+
+    function renderState(message, isError = false) {
+      songListEl.innerHTML = "";
+      songViewEl.innerHTML = `
+        <div class="state-message ${isError ? "error" : ""}">
+          ${escapeHtml(message)}
+        </div>
+      `;
+    }
+
+    function getFilteredSongs() {
+      const query = searchEl.value.trim().toLowerCase();
+
+      if (!query) {
+        return songs;
+      }
+
+      return songs.filter((song) => {
+        return (
+          song.title.toLowerCase().includes(query) ||
+          song.artist.toLowerCase().includes(query)
+        );
+      });
+    }
+
+    searchEl.addEventListener("input", () => {
+      renderSongList(getFilteredSongs());
+    });
+
+    refreshButtonEl.addEventListener("click", () => {
+      refreshSongs();
+    });
+
+    function getSpotifyEmbedUrl(url) {
+      if (!url) {
+        return "";
+      }
+
+      try {
+        const parsedUrl = new URL(url);
+        const pathParts = parsedUrl.pathname.split("/").filter(Boolean);
+
+        const type = pathParts[0];
+        const id = pathParts[1];
+        const allowedTypes = ["track", "album", "playlist", "artist", "episode", "show"];
+
+        if (!allowedTypes.includes(type) || !id) {
+          return "";
+        }
+
+        return `https://open.spotify.com/embed/${type}/${id}`;
+      } catch {
+        return "";
+      }
+    }
+
+    function parseCsv(csvText) {
+      const rows = [];
+      let row = [];
+      let cell = "";
+      let insideQuotes = false;
+
+      for (let i = 0; i < csvText.length; i++) {
+        const char = csvText[i];
+        const nextChar = csvText[i + 1];
+
+        if (char === '"' && insideQuotes && nextChar === '"') {
+          cell += '"';
+          i++;
+          continue;
+        }
+
+        if (char === '"') {
+          insideQuotes = !insideQuotes;
+          continue;
+        }
+
+        if (char === "," && !insideQuotes) {
+          row.push(cell);
+          cell = "";
+          continue;
+        }
+
+        if ((char === "\n" || char === "\r") && !insideQuotes) {
+          if (char === "\r" && nextChar === "\n") {
+            i++;
+          }
+
+          row.push(cell);
+          rows.push(row);
+          row = [];
+          cell = "";
+          continue;
+        }
+
+        cell += char;
+      }
+
+      if (cell || row.length) {
+        row.push(cell);
+        rows.push(row);
+      }
+
+      return rows.filter((csvRow) => {
+        return csvRow.some((value) => String(value || "").trim() !== "");
+      });
+    }
+
+    function formatDate(value) {
+      try {
+        return new Date(value).toLocaleString("es-AR", {
+          dateStyle: "short",
+          timeStyle: "short"
+        });
+      } catch {
+        return value;
+      }
+    }
+
+    function escapeHtml(value) {
+      return String(value || "")
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#039;");
+    }
+
+    function escapeAttribute(value) {
+      return escapeHtml(value);
+    }
+
+    function registerServiceWorker() {
+      if (!("serviceWorker" in navigator)) {
+        return;
+      }
+
+      window.addEventListener("load", () => {
+        navigator.serviceWorker.register("./service-worker.js").catch((error) => {
+          console.warn("No se pudo registrar el service worker:", error);
+        });
+      });
+    }
+  </script>
 </body>
 </html>
