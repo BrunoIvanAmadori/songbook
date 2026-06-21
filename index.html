@@ -617,6 +617,7 @@ const state = {
   fontSize: Number(localStorage.getItem('fontSize.v2') || 15),
   referenceOpenBySongId: {}
 };
+let lastViewportWidth = window.innerWidth;
 const el = {
   songSelect: document.getElementById('songSelect'),
   keySelect: document.getElementById('keySelect'),
@@ -874,7 +875,24 @@ function renderYouTubeReference(song) {
   section.appendChild(body);
   el.reference.appendChild(section);
 }
-function render(){
+function captureScrollSnapshot() {
+  return {
+    x: window.scrollX,
+    y: window.scrollY,
+    activeId: document.activeElement && document.activeElement.id
+  };
+}
+function restoreScrollSnapshot(snapshot) {
+  if (!snapshot) return;
+  window.scrollTo(snapshot.x, snapshot.y);
+  if (snapshot.activeId) {
+    const activeEl = document.getElementById(snapshot.activeId);
+    if (activeEl && typeof activeEl.focus === 'function') activeEl.focus({ preventScroll: true });
+  }
+}
+function render(options = {}){
+  const { preserveScroll = false } = options;
+  const scrollSnapshot = preserveScroll ? captureScrollSnapshot() : null;
   const song = currentSong();
   const preferFlats = song.key.includes('b') || targetKeyName(song, state.offset, false).includes('b');
   const currentKey = targetKeyName(song, state.offset, preferFlats);
@@ -898,6 +916,7 @@ function render(){
     el.body.appendChild(renderLine(line, state.offset, preferFlats, lyricsStyle));
   });
   save();
+  restoreScrollSnapshot(scrollSnapshot);
 }
 
 groupHeaderControls();
@@ -918,7 +937,7 @@ loadSongsFromGoogleSheet()
       currentSongsSource = 'remote';
       if (!songs.find(s => s.id === state.songId)) { state.songId = songs[0].id; state.offset = 0; }
       populateSongs();
-      render();
+      render({ preserveScroll: true });
       setSourceStatus('Fuente: Google Sheet central cargada correctamente. Tambien guarde una copia local para usarla sin conexion si hace falta.', true);
     } else {
       if (currentSongsSource === 'cache') {
@@ -930,7 +949,7 @@ loadSongsFromGoogleSheet()
       currentSongsSource = 'embedded';
       if (!songs.find(s => s.id === state.songId)) { state.songId = songs[0].id; state.offset = 0; }
       populateSongs();
-      render();
+      render({ preserveScroll: true });
       setSourceStatus('No encontré canciones válidas en la Google Sheet. Estoy usando la copia local incluida en este archivo.', false);
     }
   })
@@ -945,17 +964,26 @@ loadSongsFromGoogleSheet()
     currentSongsSource = 'embedded';
     if (!songs.find(s => s.id === state.songId)) { state.songId = songs[0].id; state.offset = 0; }
     populateSongs();
-    render();
+    render({ preserveScroll: true });
     setSourceStatus('No pude leer la Google Sheet central todavía. Estoy usando la copia local incluida. Para activar la base central: en Google Sheets, Archivo → Compartir → Publicar en la web, pestaña Songs.', false);
   });
-window.addEventListener('resize', render);
-el.songSelect.addEventListener('change', e => { state.songId = e.target.value; state.offset = 0; render(); });
-el.keySelect.addEventListener('change', e => { const song=currentSong(); state.offset = keyIndex(e.target.value) - keyIndex(song.key); render(); });
-document.getElementById('downBtn').addEventListener('click', ()=>{ state.offset -= 1; render(); });
-document.getElementById('upBtn').addEventListener('click', ()=>{ state.offset += 1; render(); });
-document.getElementById('resetBtn').addEventListener('click', ()=>{ state.offset = 0; render(); });
-document.getElementById('fontDown').addEventListener('click', ()=>{ state.fontSize = Math.max(12, state.fontSize - 1); render(); });
-document.getElementById('fontUp').addEventListener('click', ()=>{ state.fontSize = Math.min(24, state.fontSize + 1); render(); });
+window.addEventListener('resize', () => {
+  if (window.innerWidth === lastViewportWidth) return;
+  lastViewportWidth = window.innerWidth;
+  render({ preserveScroll: true });
+});
+el.songSelect.addEventListener('change', e => {
+  state.songId = e.target.value;
+  state.offset = 0;
+  render();
+  window.scrollTo({ top: 0, left: 0, behavior: 'auto' });
+});
+el.keySelect.addEventListener('change', e => { const song=currentSong(); state.offset = keyIndex(e.target.value) - keyIndex(song.key); render({ preserveScroll: true }); });
+document.getElementById('downBtn').addEventListener('click', ()=>{ state.offset -= 1; render({ preserveScroll: true }); });
+document.getElementById('upBtn').addEventListener('click', ()=>{ state.offset += 1; render({ preserveScroll: true }); });
+document.getElementById('resetBtn').addEventListener('click', ()=>{ state.offset = 0; render({ preserveScroll: true }); });
+document.getElementById('fontDown').addEventListener('click', ()=>{ state.fontSize = Math.max(12, state.fontSize - 1); render({ preserveScroll: true }); });
+document.getElementById('fontUp').addEventListener('click', ()=>{ state.fontSize = Math.min(24, state.fontSize + 1); render({ preserveScroll: true }); });
 </script>
 </body>
 </html>
