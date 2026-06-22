@@ -37,6 +37,9 @@
       if (payload && window.opener) {
         window.opener.postMessage(payload, payload.targetOrigin || '*');
       }
+      if (payload && window.parent && window.parent !== window) {
+        window.parent.postMessage(payload, payload.targetOrigin || '*');
+      }
       window.setTimeout(() => window.close(), 200);
     } catch (err) {
       document.body.innerHTML = '<p>No pude volver al cancionero. Cerrá esta ventana e intentá de nuevo.</p>';

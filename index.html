@@ -607,6 +607,25 @@ function requestAppsScriptPopup(action, payload = {}) {
     popup.focus();
   });
 }
+function requestAppsScriptFrame(action, payload = {}) {
+  const requestId = makePopupRequestId(action);
+  const frameName = `songbook_frame_${action}_${requestId}`;
+  const frame = document.createElement('iframe');
+  frame.name = frameName;
+  frame.hidden = true;
+  frame.style.display = 'none';
+  document.body.appendChild(frame);
+  submitAppsScriptForm(action, requestId, payload, frameName);
+
+  return new Promise((resolve, reject) => {
+    const timer = window.setTimeout(() => {
+      pendingPopupRequests.delete(requestId);
+      frame.remove();
+      reject(new Error('No pude confirmar el guardado. Volve a iniciar sesion para editar e intenta de nuevo.'));
+    }, POPUP_TIMEOUT_MS);
+    pendingPopupRequests.set(requestId, { resolve, reject, timer, frame });
+  });
+}
 function loadSongsFromGoogleSheet() {
   return new Promise((resolve, reject) => {
     const callbackName = `__cancionero_cb_${Date.now()}_${Math.floor(Math.random() * 100000)}`;
@@ -1128,7 +1147,7 @@ async function fetchEditorStatus() {
   return { canEdit: !!response.canEdit, currentUserEmail: String(response.currentUserEmail || '').trim() };
 }
 async function saveSongToApi(song) {
-  const response = await requestAppsScriptPopup('update', { song });
+  const response = await requestAppsScriptFrame('update', { song });
   return sanitizeSong(response.song || song);
 }
 async function refreshEditorStatus() {
@@ -1275,6 +1294,7 @@ function handleAppsScriptMessage(event) {
   } catch (err) {
     // Some browsers restrict checking popup state after Google redirects.
   }
+  if (pending.frame) pending.frame.remove();
   if (data.ok === false) pending.reject(new Error(data.error || 'La Web App no pudo completar la accion.'));
   else pending.resolve(data);
 }

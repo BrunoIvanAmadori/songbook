@@ -9,6 +9,6 @@
 7. Pega esa URL en `APPS_SCRIPT_URL_DEFAULT` dentro de `index.html`.
 8. Publica tambien `apps-script-callback.html` junto a `index.html`.
 
-La app lee canciones desde la Google Sheet publica con `gviz`. Para login y guardado, abre la Web App en un popup. Apps Script redirige ese popup a `apps-script-callback.html`, y esa pagina devuelve el resultado al cancionero con `postMessage`, evitando el bloqueo CORS de `fetch`.
+La app lee canciones desde la Google Sheet publica con `gviz`. Para login, abre la Web App en un popup. Para guardar, envia el formulario a un iframe oculto si la sesion ya esta activa. Apps Script redirige ambos flujos a `apps-script-callback.html`, y esa pagina devuelve el resultado al cancionero con `postMessage`, evitando el bloqueo CORS de `fetch`.
 
 Cada cambio en `Code.gs` requiere redeployar la Web App.

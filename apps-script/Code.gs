@@ -182,7 +182,9 @@ function popupOutput_(payload, e) {
     </script>
   </body>
 </html>`;
-  return HtmlService.createHtmlOutput(html);
+  return HtmlService
+    .createHtmlOutput(html)
+    .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
 }
 
 function buildCallbackRedirectUrl_(callbackUrl, payload) {
