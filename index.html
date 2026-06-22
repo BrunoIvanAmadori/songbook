@@ -399,8 +399,9 @@
             <span class="badge" id="semitones"></span>
           </div>
           <div class="song-actions">
+            <button id="loginEditBtn" class="ghost-btn" type="button">Login para editar</button>
             <button id="toggleEditBtn" class="ghost-btn" type="button">Editar</button>
-            <span class="badge status-badge" id="connectionStatus">Conectando...</span>
+            <span class="badge status-badge" id="connectionStatus">Modo lectura</span>
           </div>
         </div>
       </div>
@@ -462,7 +463,7 @@ const MAJOR_KEYS = SHARP.concat(FLAT.filter(key => !SHARP.includes(key)));
 const MINOR_KEYS = MAJOR_KEYS.map(key => `${key}m`);
 const SHEET_ID = '1ODcMNnguu-pHW6BK7zbOGSMRYkgwQiDac5YPsjS7Smc';
 const SHEET_NAME = 'Songs';
-const APPS_SCRIPT_URL_DEFAULT = 'https://script.google.com/macros/s/REPLACE_WITH_DEPLOYMENT_ID/exec';
+const APPS_SCRIPT_URL_DEFAULT = 'https://script.google.com/macros/s/AKfycbwZLg6JiqjFKyQpaC51HQrgitRz5Qwzkdd_D-h5Ln0-fM_5_8x1t9Vk0hhYY_5cNrNkMg/exec';
 const PAGE_OVERLAP_PX = 88;
 const SONGS_CACHE_KEY = 'songs.cache.v2';
 const API_URL_STORAGE_KEY = 'songbook.apiUrl';
@@ -720,6 +721,7 @@ const el = {
   editKey: document.getElementById('editKey'),
   editYoutubeUrl: document.getElementById('editYoutubeUrl'),
   editBody: document.getElementById('editBody'),
+  loginEditBtn: document.getElementById('loginEditBtn'),
   toggleEditBtn: document.getElementById('toggleEditBtn'),
   closeEditorBtn: document.getElementById('closeEditorBtn'),
   saveSongBtn: document.getElementById('saveSongBtn'),
@@ -1016,6 +1018,12 @@ function renderEditorState() {
   el.editorModal.hidden = !state.isEditing;
   document.body.classList.toggle('modal-open', state.isEditing);
   el.pageAdvanceBtn.hidden = state.isEditing;
+  const showLogin = state.apiEnabled && !state.canEdit && !state.isEditing;
+  const showEdit = state.apiEnabled && state.canEdit && !state.isCheckingPermissions;
+  el.loginEditBtn.hidden = !showLogin;
+  el.loginEditBtn.disabled = state.isCheckingPermissions;
+  el.loginEditBtn.textContent = state.isCheckingPermissions ? 'Verificando...' : 'Login para editar';
+  el.toggleEditBtn.hidden = !showEdit;
   el.toggleEditBtn.classList.toggle('active', state.isEditing);
   el.toggleEditBtn.textContent = state.isEditing ? 'Editando...' : 'Editar';
   const locked = !state.canEdit || state.isSaving || state.isCheckingPermissions;
@@ -1092,6 +1100,7 @@ async function refreshEditorStatus() {
     state.canEdit = false;
     state.currentUserEmail = '';
     setConnectionStatus('Edición sin configurar', 'warn');
+    renderEditorState();
     return;
   }
   state.isCheckingPermissions = true;
@@ -1115,13 +1124,16 @@ async function refreshEditorStatus() {
   }
 }
 async function enterEditMode() {
+  if (!state.canEdit) {
+    await refreshEditorStatus();
+    if (!state.canEdit) return;
+  }
   state.isEditing = true;
   state.draftSong = cloneSong(currentSong());
   state.editorMessage = '';
   state.editorTone = '';
   syncDraftToForm();
   render();
-  await refreshEditorStatus();
   if (state.canEdit) {
     setTimeout(() => el.editBody.focus({ preventScroll: true }), 0);
   }
@@ -1228,8 +1240,7 @@ if (currentSongsSource === 'cache') {
   setSourceStatus('Cargando canciones desde Google Sheet central...', 'warn');
 }
 if (state.apiEnabled) {
-  setConnectionStatus('Conectando...', '');
-  refreshEditorStatus();
+  setConnectionStatus('Modo lectura', '');
 } else {
   setConnectionStatus('Edición sin configurar', 'warn');
 }
@@ -1303,6 +1314,9 @@ document.getElementById('fontUp').addEventListener('click', () => {
 el.toggleEditBtn.addEventListener('click', async () => {
   if (state.isEditing) leaveEditMode(false);
   else await enterEditMode();
+});
+el.loginEditBtn.addEventListener('click', async () => {
+  await refreshEditorStatus();
 });
 el.closeEditorBtn.addEventListener('click', () => leaveEditMode(false));
 el.cancelEditBtn.addEventListener('click', () => leaveEditMode(false));
