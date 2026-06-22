@@ -205,17 +205,50 @@
     .reference-player[open] .reference-chevron{transform:rotate(180deg)}
     .reference-body{padding:0 12px 12px;border-top:1px solid rgba(255,255,255,.06)}
     .reference-frame{display:block;width:100%;aspect-ratio:16/9;min-height:200px;border:0;border-radius:12px}
+    .editor-modal{
+      position:fixed;
+      inset:0;
+      z-index:40;
+      display:grid;
+      place-items:end center;
+      padding:16px 12px;
+      background:rgba(0,0,0,.62);
+      backdrop-filter:blur(8px);
+    }
+    .editor-modal[hidden]{
+      display:none !important;
+    }
     .editor-panel{
+      width:min(820px, 100%);
+      max-height:min(90vh, 920px);
+      overflow:auto;
       display:grid;
       gap:12px;
-      margin:0 0 16px;
-      padding:14px;
+      padding:16px;
       border:1px solid rgba(255,255,255,.07);
-      border-radius:14px;
-      background:rgba(255,255,255,.04);
+      border-radius:18px;
+      background:linear-gradient(180deg, rgba(30,30,30,.98), rgba(18,18,18,.98));
+      box-shadow:0 24px 50px rgba(0,0,0,.42);
     }
-    .editor-panel[hidden]{
-      display:none !important;
+    .editor-modal-head{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:12px;
+    }
+    .editor-modal-head h3{
+      margin:0;
+      font-size:18px;
+      letter-spacing:-.02em;
+    }
+    .icon-btn{
+      width:40px;
+      min-width:40px;
+      min-height:40px;
+      padding:0;
+      font-size:20px;
+      line-height:1;
+      border-radius:999px;
     }
     .editor-grid{
       display:grid;
@@ -298,6 +331,10 @@
       z-index:30;
     }
     .page-advance[hidden]{display:none}
+    body.modal-open{
+      overflow:hidden;
+      touch-action:none;
+    }
     @media (min-width:700px){
       header{padding:14px 18px 8px}
       .brand{padding:0;background:transparent;border:0;box-shadow:none}
@@ -316,7 +353,7 @@
       .page-advance{width:64px;height:64px;right:12px;bottom:12px}
     }
     @media print{
-      header,.note,.reference-player,.editor-panel,.page-advance{display:none}
+      header,.note,.reference-player,.editor-modal,.page-advance{display:none}
       body{background:white}
       main{padding:0;max-width:none}
       .sheet{border:0;box-shadow:none;border-radius:0}
@@ -370,33 +407,6 @@
 
       <div id="songReference"></div>
 
-      <section class="editor-panel" id="editorPanel" hidden>
-        <div class="editor-status" id="editorStatus"></div>
-        <div class="editor-grid">
-          <div>
-            <label for="editTitle">Título</label>
-            <input id="editTitle" type="text" autocomplete="off" />
-          </div>
-          <div>
-            <label for="editKey">Tono base</label>
-            <input id="editKey" type="text" autocomplete="off" placeholder="Ej: Am, G, F#m" />
-          </div>
-          <div class="full">
-            <label for="editYoutubeUrl">YouTube URL</label>
-            <input id="editYoutubeUrl" type="url" autocomplete="off" placeholder="https://www.youtube.com/watch?v=..." />
-          </div>
-          <div class="full">
-            <label for="editBody">Texto crudo</label>
-            <textarea id="editBody" spellcheck="false"></textarea>
-          </div>
-        </div>
-        <div class="editor-actions">
-          <button id="saveSongBtn" class="primary-btn" type="button">Guardar cambios</button>
-          <button id="reloadSongBtn" type="button">Recargar desde la hoja</button>
-          <button id="cancelEditBtn" type="button">Cancelar</button>
-        </div>
-      </section>
-
       <div id="songBody"></div>
 
       <div class="footer-actions">
@@ -408,6 +418,38 @@
   </main>
 
   <button id="pageAdvanceBtn" class="page-advance" type="button" aria-label="Pasar hoja">↓</button>
+  <div class="editor-modal" id="editorModal" hidden>
+    <section class="editor-panel" id="editorPanel" role="dialog" aria-modal="true" aria-labelledby="editorModalTitle">
+      <div class="editor-modal-head">
+        <h3 id="editorModalTitle">Editar canción</h3>
+        <button id="closeEditorBtn" class="icon-btn" type="button" aria-label="Cerrar editor">×</button>
+      </div>
+      <div class="editor-status" id="editorStatus"></div>
+      <div class="editor-grid">
+        <div>
+          <label for="editTitle">Título</label>
+          <input id="editTitle" type="text" autocomplete="off" />
+        </div>
+        <div>
+          <label for="editKey">Tono base</label>
+          <input id="editKey" type="text" autocomplete="off" placeholder="Ej: Am, G, F#m" />
+        </div>
+        <div class="full">
+          <label for="editYoutubeUrl">YouTube URL</label>
+          <input id="editYoutubeUrl" type="url" autocomplete="off" placeholder="https://www.youtube.com/watch?v=..." />
+        </div>
+        <div class="full">
+          <label for="editBody">Texto crudo</label>
+          <textarea id="editBody" spellcheck="false"></textarea>
+        </div>
+      </div>
+      <div class="editor-actions">
+        <button id="saveSongBtn" class="primary-btn" type="button">Guardar cambios</button>
+        <button id="reloadSongBtn" type="button">Recargar desde la hoja</button>
+        <button id="cancelEditBtn" type="button">Cancelar</button>
+      </div>
+    </section>
+  </div>
 
 <script>
 const SHARP = ['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'];
@@ -672,12 +714,14 @@ const el = {
   body: document.getElementById('songBody'),
   sheet: document.getElementById('sheet'),
   editorPanel: document.getElementById('editorPanel'),
+  editorModal: document.getElementById('editorModal'),
   editorStatus: document.getElementById('editorStatus'),
   editTitle: document.getElementById('editTitle'),
   editKey: document.getElementById('editKey'),
   editYoutubeUrl: document.getElementById('editYoutubeUrl'),
   editBody: document.getElementById('editBody'),
   toggleEditBtn: document.getElementById('toggleEditBtn'),
+  closeEditorBtn: document.getElementById('closeEditorBtn'),
   saveSongBtn: document.getElementById('saveSongBtn'),
   reloadSongBtn: document.getElementById('reloadSongBtn'),
   cancelEditBtn: document.getElementById('cancelEditBtn'),
@@ -969,11 +1013,11 @@ function hasDraftChanges() {
   return !songsEqual(state.draftSong, currentSong());
 }
 function renderEditorState() {
-  el.editorPanel.hidden = !state.isEditing;
-  el.body.hidden = state.isEditing;
+  el.editorModal.hidden = !state.isEditing;
+  document.body.classList.toggle('modal-open', state.isEditing);
   el.pageAdvanceBtn.hidden = state.isEditing;
   el.toggleEditBtn.classList.toggle('active', state.isEditing);
-  el.toggleEditBtn.textContent = state.isEditing ? 'Volver a vista' : 'Editar';
+  el.toggleEditBtn.textContent = state.isEditing ? 'Editando...' : 'Editar';
   const locked = !state.canEdit || state.isSaving || state.isCheckingPermissions;
   [el.editTitle, el.editKey, el.editYoutubeUrl, el.editBody].forEach(node => {
     node.readOnly = locked;
@@ -1010,6 +1054,7 @@ function renderSongBody(song) {
   const offset = normalizeOffset(state.offset);
   el.semitones.textContent = offset === 0 ? 'Sin transponer' : (offset > 0 ? `+${offset} semitonos` : `${offset} semitonos`);
   renderYouTubeReference(song);
+  el.body.hidden = false;
   el.body.innerHTML = '';
   let lyricsStyle = '';
   song.body.split('\n').forEach(line => {
@@ -1078,7 +1123,7 @@ async function enterEditMode() {
   render();
   await refreshEditorStatus();
   if (state.canEdit) {
-    el.editBody.focus({ preventScroll: true });
+    setTimeout(() => el.editBody.focus({ preventScroll: true }), 0);
   }
 }
 function leaveEditMode(forceDiscard) {
@@ -1092,6 +1137,7 @@ function leaveEditMode(forceDiscard) {
   state.editorMessage = '';
   state.editorTone = '';
   render();
+  el.toggleEditBtn.focus({ preventScroll: true });
 }
 async function reloadCurrentSongFromRemote() {
   if (state.isSaving) return;
@@ -1258,10 +1304,14 @@ el.toggleEditBtn.addEventListener('click', async () => {
   if (state.isEditing) leaveEditMode(false);
   else await enterEditMode();
 });
+el.closeEditorBtn.addEventListener('click', () => leaveEditMode(false));
 el.cancelEditBtn.addEventListener('click', () => leaveEditMode(false));
 el.reloadSongBtn.addEventListener('click', reloadCurrentSongFromRemote);
 el.saveSongBtn.addEventListener('click', saveCurrentSong);
 el.pageAdvanceBtn.addEventListener('click', () => scrollByPage(1));
+el.editorModal.addEventListener('click', event => {
+  if (event.target === el.editorModal) leaveEditMode(false);
+});
 [el.editTitle, el.editKey, el.editYoutubeUrl, el.editBody].forEach(node => {
   node.addEventListener('input', () => {
     syncFormToDraft();
@@ -1273,6 +1323,11 @@ el.pageAdvanceBtn.addEventListener('click', () => scrollByPage(1));
   });
 });
 window.addEventListener('keydown', event => {
+  if (state.isEditing && event.code === 'Escape') {
+    event.preventDefault();
+    leaveEditMode(false);
+    return;
+  }
   if (state.isEditing || isTypingTarget(event.target)) return;
   if (event.code === 'Space' || event.code === 'PageDown') {
     event.preventDefault();
