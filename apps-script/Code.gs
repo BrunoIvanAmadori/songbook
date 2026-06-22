@@ -7,10 +7,12 @@ function doGet(e) {
   const action = String((e && e.parameter && e.parameter.action) || 'list').trim().toLowerCase();
   try {
     if (action === 'list') return jsonOutput({ ok: true, songs: listSongs_() });
-    if (action === 'editor-status') return jsonOutput(getEditorStatus_());
+    if (action === 'editor-status') {
+      return popupOutput_(getEditorStatus_(e), e);
+    }
     return jsonOutput({ ok: false, error: `Acción GET no soportada: ${action}` });
   } catch (err) {
-    return jsonOutput({ ok: false, error: err.message || String(err) });
+    return popupOutput_({ ok: false, error: err.message || String(err) }, e);
   }
 }
 
@@ -19,17 +21,22 @@ function doPost(e) {
     const payload = parseRequestBody_(e);
     const action = String(payload.action || '').trim().toLowerCase();
     if (action !== 'update') {
-      return jsonOutput({ ok: false, error: `Acción POST no soportada: ${action || '(vacía)'}` });
+      return popupOutput_({ ok: false, error: `Acción POST no soportada: ${action || '(vacía)'}` }, e);
     }
     const song = sanitizeSongPayload_(payload.song || payload);
     const updated = updateSong_(song);
-    return jsonOutput({ ok: true, song: updated });
+    return popupOutput_({ ok: true, action: 'update', song: updated }, e);
   } catch (err) {
-    return jsonOutput({ ok: false, error: err.message || String(err) });
+    return popupOutput_({ ok: false, error: err.message || String(err) }, e);
   }
 }
 
 function parseRequestBody_(e) {
+  if (e && e.parameter && Object.keys(e.parameter).length) {
+    const payload = Object.assign({}, e.parameter);
+    if (payload.song) payload.song = JSON.parse(payload.song);
+    return payload;
+  }
   const raw = e && e.postData && e.postData.contents ? e.postData.contents : '{}';
   return JSON.parse(raw);
 }
@@ -64,11 +71,12 @@ function canCurrentUserEdit_(file) {
   return file.getEditors().some(user => String(user.getEmail() || '').trim().toLowerCase() === email);
 }
 
-function getEditorStatus_() {
+function getEditorStatus_(e) {
   const ctx = getSpreadsheetContext_();
   const currentUserEmail = getCurrentUserEmail_();
   return {
     ok: true,
+    action: 'editor-status',
     canEdit: canCurrentUserEdit_(ctx.file),
     currentUserEmail: currentUserEmail
   };
@@ -142,4 +150,32 @@ function jsonOutput(payload) {
   return ContentService
     .createTextOutput(JSON.stringify(payload))
     .setMimeType(ContentService.MimeType.JSON);
+}
+
+function popupOutput_(payload, e) {
+  const params = (e && e.parameter) || {};
+  const response = Object.assign({}, payload, {
+    type: 'songbook-apps-script',
+    requestId: String(params.requestId || '')
+  });
+  const targetOrigin = String(params.origin || '*');
+  const html = `
+<!doctype html>
+<html>
+  <head>
+    <base target="_top">
+    <meta charset="utf-8">
+  </head>
+  <body>
+    <script>
+      const payload = ${JSON.stringify(response).replace(/</g, '\\u003c')};
+      const targetOrigin = ${JSON.stringify(targetOrigin)};
+      if (window.opener) {
+        window.opener.postMessage(payload, targetOrigin || '*');
+      }
+      window.setTimeout(() => window.close(), 200);
+    </script>
+  </body>
+</html>`;
+  return HtmlService.createHtmlOutput(html);
 }

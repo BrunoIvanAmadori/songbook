@@ -463,10 +463,13 @@ const MAJOR_KEYS = SHARP.concat(FLAT.filter(key => !SHARP.includes(key)));
 const MINOR_KEYS = MAJOR_KEYS.map(key => `${key}m`);
 const SHEET_ID = '1ODcMNnguu-pHW6BK7zbOGSMRYkgwQiDac5YPsjS7Smc';
 const SHEET_NAME = 'Songs';
-const APPS_SCRIPT_URL_DEFAULT = 'https://script.google.com/macros/s/AKfycbwZLg6JiqjFKyQpaC51HQrgitRz5Qwzkdd_D-h5Ln0-fM_5_8x1t9Vk0hhYY_5cNrNkMg/exec';
+const APPS_SCRIPT_URL_DEFAULT = 'https://script.google.com/macros/s/AKfycbzKb0PpyJ7n_rb1gZDjPDSjP9DYyeiS1WRjcEhn4K91R2UNVoJhtZUYnAscGSxtJ_lKGg/exec';
 const PAGE_OVERLAP_PX = 88;
 const SONGS_CACHE_KEY = 'songs.cache.v2';
 const API_URL_STORAGE_KEY = 'songbook.apiUrl';
+const POPUP_TIMEOUT_MS = 120000;
+const POPUP_FEATURES = 'popup=yes,width=520,height=680,menubar=no,toolbar=no,location=yes,status=no,scrollbars=yes,resizable=yes';
+const pendingPopupRequests = new Map();
 
 function parseKey(key) {
   const match = String(key || '').match(/^([A-G](?:#|b)?)(m?)$/);
@@ -543,6 +546,10 @@ function getConfiguredApiUrl() {
   return normalizeApiUrl(localStorage.getItem(API_URL_STORAGE_KEY) || APPS_SCRIPT_URL_DEFAULT);
 }
 function hasConfiguredApi() { return !!getConfiguredApiUrl(); }
+function getMessageTargetOrigin() {
+  const origin = window.location.origin;
+  return !origin || origin === 'null' || origin === 'file://' ? '*' : origin;
+}
 function parseApiResponseText(text) {
   if (!text) return {};
   try { return JSON.parse(text); }
@@ -566,6 +573,58 @@ async function callApi(action, options = {}) {
   const data = parseApiResponseText(text);
   if (!response.ok || data.ok === false) throw new Error(data.error || `Error ${response.status} al comunicarme con la Web App.`);
   return data;
+}
+function makePopupRequestId(action) {
+  return `${action}_${Date.now()}_${Math.random().toString(36).slice(2)}`;
+}
+function buildAppsScriptUrl(action, requestId) {
+  const baseUrl = getConfiguredApiUrl();
+  if (!baseUrl) throw new Error('Configura la URL de la Web App de Apps Script para habilitar la edicion protegida.');
+  const url = new URL(baseUrl);
+  url.searchParams.set('action', action);
+  url.searchParams.set('requestId', requestId);
+  url.searchParams.set('origin', getMessageTargetOrigin());
+  return url.toString();
+}
+function submitAppsScriptForm(action, requestId, payload, popupName) {
+  const form = document.createElement('form');
+  form.method = 'POST';
+  form.action = getConfiguredApiUrl();
+  form.target = popupName;
+  form.style.display = 'none';
+  const fields = {
+    action,
+    requestId,
+    origin: getMessageTargetOrigin(),
+    song: payload && payload.song ? JSON.stringify(payload.song) : ''
+  };
+  Object.entries(fields).forEach(([name, value]) => {
+    const input = document.createElement('input');
+    input.type = 'hidden';
+    input.name = name;
+    input.value = value;
+    form.appendChild(input);
+  });
+  document.body.appendChild(form);
+  form.submit();
+  form.remove();
+}
+function requestAppsScriptPopup(action, payload = {}) {
+  const requestId = makePopupRequestId(action);
+  const popupName = `songbook_${action}_${requestId}`;
+  const popup = action === 'update'
+    ? window.open('about:blank', popupName, POPUP_FEATURES)
+    : window.open(buildAppsScriptUrl(action, requestId), popupName, POPUP_FEATURES);
+  if (!popup) throw new Error('El navegador bloqueo la ventana de Google. Permiti popups para iniciar sesion o guardar.');
+  if (action === 'update') submitAppsScriptForm(action, requestId, payload, popupName);
+  return new Promise((resolve, reject) => {
+    const timer = window.setTimeout(() => {
+      pendingPopupRequests.delete(requestId);
+      reject(new Error('La ventana de Google tardo demasiado en responder.'));
+    }, POPUP_TIMEOUT_MS);
+    pendingPopupRequests.set(requestId, { resolve, reject, timer, popup });
+    popup.focus();
+  });
 }
 function loadSongsFromGoogleSheet() {
   return new Promise((resolve, reject) => {
@@ -1083,16 +1142,12 @@ function render() {
   saveLocalState();
   setControlsDisabled(state.isEditing);
 }
-async function fetchSongsFromApi() {
-  const response = await callApi('list');
-  return parseSongsPayload(response.songs);
-}
 async function fetchEditorStatus() {
-  const response = await callApi('editor-status');
+  const response = await requestAppsScriptPopup('editor-status');
   return { canEdit: !!response.canEdit, currentUserEmail: String(response.currentUserEmail || '').trim() };
 }
 async function saveSongToApi(song) {
-  const response = await callApi('update', { method: 'POST', payload: { song } });
+  const response = await requestAppsScriptPopup('update', { song });
   return sanitizeSong(response.song || song);
 }
 async function refreshEditorStatus() {
@@ -1157,11 +1212,9 @@ async function reloadCurrentSongFromRemote() {
   state.editorTone = '';
   renderEditorState();
   try {
-    let remoteSongs = [];
-    if (state.apiEnabled) remoteSongs = await fetchSongsFromApi();
-    if (!remoteSongs.length) remoteSongs = await loadSongsFromGoogleSheet();
+    const remoteSongs = await loadSongsFromGoogleSheet();
     if (!remoteSongs.length) throw new Error('No pude recuperar canciones desde la hoja.');
-    setSongs(remoteSongs, state.apiEnabled ? 'api' : 'remote');
+    setSongs(remoteSongs, 'remote');
     saveSongsCache(songs);
     state.draftSong = cloneSong(currentSong());
     syncDraftToForm();
@@ -1229,6 +1282,21 @@ function isTypingTarget(target) {
   const tagName = target.tagName;
   return tagName === 'INPUT' || tagName === 'TEXTAREA' || tagName === 'SELECT' || target.isContentEditable;
 }
+function handleAppsScriptMessage(event) {
+  const data = event.data;
+  if (!data || data.type !== 'songbook-apps-script' || !data.requestId) return;
+  const pending = pendingPopupRequests.get(data.requestId);
+  if (!pending) return;
+  window.clearTimeout(pending.timer);
+  pendingPopupRequests.delete(data.requestId);
+  try {
+    if (pending.popup && !pending.popup.closed) pending.popup.close();
+  } catch (err) {
+    // Some browsers restrict checking popup state after Google redirects.
+  }
+  if (data.ok === false) pending.reject(new Error(data.error || 'La Web App no pudo completar la accion.'));
+  else pending.resolve(data);
+}
 
 groupHeaderControls();
 populateSongs();
@@ -1246,14 +1314,12 @@ if (state.apiEnabled) {
 }
 (async () => {
   try {
-    let remoteSongs = [];
-    if (state.apiEnabled) {
-      try { remoteSongs = await fetchSongsFromApi(); }
+    const remoteSongs = await loadSongsFromGoogleSheet();
+    /*
       catch (apiError) { console.warn('No pude leer canciones desde Apps Script, pruebo fuente pública.', apiError); }
-    }
-    if (!remoteSongs.length) remoteSongs = await loadSongsFromGoogleSheet();
+    */
     if (!remoteSongs.length) throw new Error('No encontré canciones válidas en la hoja.');
-    setSongs(remoteSongs, state.apiEnabled && remoteSongs.length ? 'api' : 'remote');
+    setSongs(remoteSongs, 'remote');
     saveSongsCache(songs);
     render();
     setSourceStatus('Fuente central cargada correctamente. Guardé una copia local para usarla sin conexión si hace falta.', 'ok');
@@ -1270,6 +1336,7 @@ if (state.apiEnabled) {
   }
 })();
 let resizeTimer = null;
+window.addEventListener('message', handleAppsScriptMessage);
 window.addEventListener('resize', () => {
   clearTimeout(resizeTimer);
   resizeTimer = setTimeout(render, 120);

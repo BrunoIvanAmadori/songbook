@@ -1,11 +1,11 @@
 # Apps Script deployment
 
-1. Creá un proyecto de Google Apps Script y copiá `Code.gs` y `appsscript.json`.
-2. Desplegá una `Web app`.
-3. Elegí `Execute as: User accessing the web app`.
-4. Elegí `Who has access: Anyone with Google account`.
-5. Compartí la Google Sheet solo con las cuentas que deban editar.
-6. Copiá la URL `.../exec` desplegada.
-7. Abrí la app con `?api=URL_DE_TU_WEB_APP` o guardá esa URL en `localStorage.songbook.apiUrl`.
+1. Crea un proyecto de Google Apps Script y copia `Code.gs` y `appsscript.json`.
+2. Despliega una `Web app`.
+3. Elige `Execute as: User accessing the web app`.
+4. Elige `Who has access: Anyone with Google account`.
+5. Comparte la Google Sheet solo con las cuentas que deban editar.
+6. Copia la URL `.../exec` desplegada.
+7. Pega esa URL en `APPS_SCRIPT_URL_DEFAULT` dentro de `index.html`.
 
-La app seguirá pudiendo leer desde la Sheet pública si la Web App falla, pero el guardado y la verificación de permisos dependen de esta Web App.
+La app lee canciones desde la Google Sheet publica con `gviz`. Para login y guardado, abre la Web App en un popup y recibe el resultado con `postMessage`, evitando el bloqueo CORS de `fetch`.
