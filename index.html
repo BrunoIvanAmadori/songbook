@@ -550,6 +550,9 @@ function getMessageTargetOrigin() {
   const origin = window.location.origin;
   return !origin || origin === 'null' || origin === 'file://' ? '*' : origin;
 }
+function getAppsScriptCallbackUrl() {
+  return new URL('apps-script-callback.html', window.location.href).toString();
+}
 function makePopupRequestId(action) {
   return `${action}_${Date.now()}_${Math.random().toString(36).slice(2)}`;
 }
@@ -560,6 +563,7 @@ function buildAppsScriptUrl(action, requestId) {
   url.searchParams.set('action', action);
   url.searchParams.set('requestId', requestId);
   url.searchParams.set('origin', getMessageTargetOrigin());
+  url.searchParams.set('callback', getAppsScriptCallbackUrl());
   return url.toString();
 }
 function submitAppsScriptForm(action, requestId, payload, popupName) {
@@ -572,6 +576,7 @@ function submitAppsScriptForm(action, requestId, payload, popupName) {
     action,
     requestId,
     origin: getMessageTargetOrigin(),
+    callback: getAppsScriptCallbackUrl(),
     song: payload && payload.song ? JSON.stringify(payload.song) : ''
   };
   Object.entries(fields).forEach(([name, value]) => {

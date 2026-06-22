@@ -156,26 +156,54 @@ function popupOutput_(payload, e) {
   const params = (e && e.parameter) || {};
   const response = Object.assign({}, payload, {
     type: 'songbook-apps-script',
-    requestId: String(params.requestId || '')
+    requestId: String(params.requestId || ''),
+    targetOrigin: String(params.origin || '*')
   });
-  const targetOrigin = String(params.origin || '*');
+  const callbackUrl = String(params.callback || '');
+  if (!callbackUrl) {
+    return jsonOutput(response);
+  }
+  const redirectUrl = buildCallbackRedirectUrl_(callbackUrl, response);
   const html = `
 <!doctype html>
 <html>
   <head>
     <base target="_top">
     <meta charset="utf-8">
+    <style>
+      body{margin:0;min-height:100vh;display:grid;place-items:center;background:#101010;color:#f5f5f5;font-family:Arial,sans-serif}
+      a{display:inline-block;padding:12px 16px;border-radius:999px;background:#1ed760;color:#07110a;font-weight:700;text-decoration:none}
+    </style>
   </head>
   <body>
+    <a href="${escapeHtml_(redirectUrl)}" target="_top">Volver al cancionero</a>
     <script>
-      const payload = ${JSON.stringify(response).replace(/</g, '\\u003c')};
-      const targetOrigin = ${JSON.stringify(targetOrigin)};
-      if (window.opener) {
-        window.opener.postMessage(payload, targetOrigin || '*');
-      }
-      window.setTimeout(() => window.close(), 200);
+      window.top.location.replace(${JSON.stringify(redirectUrl)});
     </script>
   </body>
 </html>`;
   return HtmlService.createHtmlOutput(html);
+}
+
+function buildCallbackRedirectUrl_(callbackUrl, payload) {
+  const separator = callbackUrl.indexOf('#') >= 0 ? '&' : '#';
+  return callbackUrl + separator + 'songbook=' + encodePayload_(payload);
+}
+
+function encodePayload_(payload) {
+  const bytes = Utilities.newBlob(JSON.stringify(payload)).getBytes();
+  let binary = '';
+  bytes.forEach(byte => {
+    binary += String.fromCharCode(byte < 0 ? byte + 256 : byte);
+  });
+  return Utilities.base64EncodeWebSafe(binary);
+}
+
+function escapeHtml_(value) {
+  return String(value)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
 }

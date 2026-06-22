@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Volviendo al cancionero...</title>
+  <style>
+    body{
+      margin:0;
+      min-height:100vh;
+      display:grid;
+      place-items:center;
+      background:#101010;
+      color:#f5f5f5;
+      font-family:system-ui,-apple-system,"Segoe UI",sans-serif;
+    }
+    p{margin:0;color:#bdbdbd}
+  </style>
+</head>
+<body>
+  <p>Volviendo al cancionero...</p>
+  <script>
+    function decodePayload() {
+      const params = new URLSearchParams(window.location.hash.replace(/^#/, ''));
+      const encoded = params.get('songbook');
+      if (!encoded) return null;
+      const normalized = encoded.replace(/-/g, '+').replace(/_/g, '/');
+      const padded = normalized.padEnd(Math.ceil(normalized.length / 4) * 4, '=');
+      const binary = atob(padded);
+      const bytes = Uint8Array.from(binary, char => char.charCodeAt(0));
+      const json = new TextDecoder('utf-8').decode(bytes);
+      return JSON.parse(json);
+    }
+
+    try {
+      const payload = decodePayload();
+      if (payload && window.opener) {
+        window.opener.postMessage(payload, payload.targetOrigin || '*');
+      }
+      window.setTimeout(() => window.close(), 200);
+    } catch (err) {
+      document.body.innerHTML = '<p>No pude volver al cancionero. Cerrá esta ventana e intentá de nuevo.</p>';
+    }
+  </script>
+</body>
+</html>

@@ -7,5 +7,8 @@
 5. Comparte la Google Sheet solo con las cuentas que deban editar.
 6. Copia la URL `.../exec` desplegada.
 7. Pega esa URL en `APPS_SCRIPT_URL_DEFAULT` dentro de `index.html`.
+8. Publica tambien `apps-script-callback.html` junto a `index.html`.
 
-La app lee canciones desde la Google Sheet publica con `gviz`. Para login y guardado, abre la Web App en un popup y recibe el resultado con `postMessage`, evitando el bloqueo CORS de `fetch`.
+La app lee canciones desde la Google Sheet publica con `gviz`. Para login y guardado, abre la Web App en un popup. Apps Script redirige ese popup a `apps-script-callback.html`, y esa pagina devuelve el resultado al cancionero con `postMessage`, evitando el bloqueo CORS de `fetch`.
+
+Cada cambio en `Code.gs` requiere redeployar la Web App.
