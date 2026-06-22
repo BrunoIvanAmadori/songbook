@@ -550,30 +550,6 @@ function getMessageTargetOrigin() {
   const origin = window.location.origin;
   return !origin || origin === 'null' || origin === 'file://' ? '*' : origin;
 }
-function parseApiResponseText(text) {
-  if (!text) return {};
-  try { return JSON.parse(text); }
-  catch (err) { throw new Error(text.trim() || 'Respuesta inválida del servidor.'); }
-}
-async function callApi(action, options = {}) {
-  const baseUrl = getConfiguredApiUrl();
-  if (!baseUrl) throw new Error('Configurá la URL de la Web App de Apps Script para habilitar la edición protegida.');
-  const method = (options.method || 'GET').toUpperCase();
-  const url = new URL(baseUrl);
-  const init = { method, credentials: 'include' };
-  if (method === 'GET') {
-    url.searchParams.set('action', action);
-    url.searchParams.set('_', Date.now().toString());
-  } else {
-    init.headers = { 'Content-Type': 'application/json' };
-    init.body = JSON.stringify({ action, ...(options.payload || {}) });
-  }
-  const response = await fetch(url.toString(), init);
-  const text = await response.text();
-  const data = parseApiResponseText(text);
-  if (!response.ok || data.ok === false) throw new Error(data.error || `Error ${response.status} al comunicarme con la Web App.`);
-  return data;
-}
 function makePopupRequestId(action) {
   return `${action}_${Date.now()}_${Math.random().toString(36).slice(2)}`;
 }
@@ -1315,9 +1291,6 @@ if (state.apiEnabled) {
 (async () => {
   try {
     const remoteSongs = await loadSongsFromGoogleSheet();
-    /*
-      catch (apiError) { console.warn('No pude leer canciones desde Apps Script, pruebo fuente pública.', apiError); }
-    */
     if (!remoteSongs.length) throw new Error('No encontré canciones válidas en la hoja.');
     setSongs(remoteSongs, 'remote');
     saveSongsCache(songs);
